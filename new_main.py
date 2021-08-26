@@ -3,11 +3,12 @@ import time
 import numpy as np
 import pygame
 
+import collision_detection
 from bicycle_movement_model import move
 from map_tiles import drawing
 from map_tiles.block import Block
 from map_tiles.drawing import WINDOW_WIDTH, WINDOW_HEIGHT, CAR_WIDTH, CAR_LENGTH, CUBE_WIDTH, CUBE_LENGTH, RED, BLUE, \
-    CYAN
+    CYAN, WHITE
 from map_tiles.robot import Robot
 from utilities import cm_to_pixel
 
@@ -48,7 +49,10 @@ while running:
 
     window.fill(drawing.BLACK)
     obstacles = drawing.draw_obstacles(window, block_pos)
+
+    # pygame.draw.line(window, WHITE, (drawing.CUBE_LENGTH, 0), (drawing.CUBE_LENGTH, 600))
     car = drawing.draw_robot(robot, window)
+    drawing.draw_grid(window)
 
     pygame.display.update()
     clock.tick(100)
@@ -67,7 +71,7 @@ while running:
             elif event.key == pygame.K_DOWN:
                 delta_forward = -MOVE_SPEED_PIXEL
             elif event.key == pygame.K_ESCAPE:
-                robot.set(CAR_WIDTH/2, WINDOW_HEIGHT-CAR_LENGTH/4, np.radians(90),0)
+                robot.set(CAR_WIDTH/2, WINDOW_HEIGHT-CAR_LENGTH/4, np.radians(90), 0)
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_RIGHT or event.key == pygame.K_LEFT:
                 delta_steer = 0.0
@@ -75,9 +79,13 @@ while running:
                 delta_forward = 0.0
 
     curr_point = robot.get_point()
+    print(robot.x, robot.y)
+    print(curr_point.x, curr_point.y,  "Curr")
     next_point = move(curr_point, delta_steer, delta_forward, CAR_LENGTH, MAX_STEERING_ANGLE, COMMAND_FREQUENCY)
+    print(next_point.x, next_point.y)
+    print(next_point.as_list())
     # Test if next_point collides with any obstacle, else stop
-
+    has_collision = collision_detection.has_collision(next_point, blocks)
 
     robot.set(next_point.x, next_point.y, next_point.theta, delta_steer)
 

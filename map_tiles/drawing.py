@@ -38,6 +38,7 @@ def rotate_point(center_x, center_y, point_x, point_y, rotation_angle):
     new_y = center_y - length * np.sin(angle)
     return new_x, new_y
 
+
 def get_corners(center_x, center_y, arg1, arg2, arg3=None, arg4=None):
     arg3 = arg1 if arg3 is None else arg3
     arg4 = arg2 if arg4 is None else arg4
@@ -48,6 +49,11 @@ def get_corners(center_x, center_y, arg1, arg2, arg3=None, arg4=None):
     p4 = [center_x - arg1, center_y + arg4]
 
     return [p1, p2, p3, p4]
+
+
+def get_block_corners(block):
+    return get_corners(block.x, block.y, 0, 0, block.cell_height, block.cell_width)
+
 
 def get_wheel_corners(wheel_c_x, wheel_c_y, wheel_length, wheel_width):
     wheel_x = wheel_length / 2
@@ -68,11 +74,15 @@ def get_wheels_centers(car_x, car_y, car_length, car_width, orientation):
 def draw_rect(window, center, corners, rotation_angle, color):
 
     rotated_corners = compute_corners(center, corners, rotation_angle)
+    print("Robot Center")
+    print(center)
+    print("Rotated Corners")
+    print(rotated_corners)
 
     # draw rectangular polygon --> car body
     rect = pygame.draw.polygon(window, color,
                                (rotated_corners[0], rotated_corners[1], rotated_corners[2], rotated_corners[3]))
-    return rect
+    return rect, rotated_corners
 
 def draw_robot(robot, window):
     car_x = robot.x
@@ -83,7 +93,8 @@ def draw_robot(robot, window):
     corners = get_corners(car_x, car_y, CAR_LENGTH/4, CAR_WIDTH/2, 0.75*CAR_LENGTH, CAR_WIDTH/2)
 
     # car body
-    car = draw_rect(window, [car_x, car_y], corners, orientation, CAR_COLOR)
+    print("Draw_robot", car_x, car_y)
+    car, rotated_corners = draw_rect(window, [car_x, car_y], corners, orientation, CAR_COLOR)
 
     # wheels
     wheels = get_wheels_centers(car_x, car_y, CAR_LENGTH, CAR_WIDTH, orientation)
@@ -98,5 +109,17 @@ def draw_robot(robot, window):
     # draw mid of axle
     pygame.draw.circle(window, RED, (int(car_x), int(car_y)), 3)
 
+    return rotated_corners
+
+
 def draw_obstacles(window, obstacles):
     [pygame.draw.rect(window, CUBE_COLOR, x) for x in obstacles]
+
+
+def draw_grid(window, map_shape=(20, 20)):
+    for i in range(1, map_shape[0]):
+        curr_x = CUBE_WIDTH * i
+        pygame.draw.line(window, WHITE, (curr_x, 0), (curr_x, WINDOW_HEIGHT))
+    for i in range(1, map_shape[0]):
+        curr_y = CUBE_LENGTH * i
+        pygame.draw.line(window, WHITE, (0, curr_y), (WINDOW_WIDTH, curr_y))
