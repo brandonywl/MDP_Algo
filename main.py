@@ -29,7 +29,7 @@ pygame.init()
 window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 
 # Generate blocks for the map
-blocks = Block.generate_blocks((CUBE_WIDTH, CUBE_LENGTH), 4)
+blocks = Block.generate_blocks((CUBE_WIDTH, CUBE_LENGTH), 5)
 robot = Robot(np.radians(90), CAR_WIDTH/2, (WINDOW_HEIGHT - CAR_LENGTH/4), CAR_WIDTH, CAR_LENGTH)
 block_pos = [x.get_pos()[1:] for x in blocks]
 
@@ -43,7 +43,7 @@ delta_forward = 0
 while running:
 
     window.fill(drawing.BLACK)
-    obstacles = drawing.draw_obstacles(window, block_pos)
+    obstacles = drawing.draw_obstacles(window, blocks)
 
     # pygame.draw.line(window, WHITE, (drawing.CUBE_LENGTH, 0), (drawing.CUBE_LENGTH, 600))
     car = drawing.draw_robot(robot, window)

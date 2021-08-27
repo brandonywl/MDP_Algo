@@ -17,6 +17,7 @@ WINDOW_OFFSET_WIDTH, WINDOW_OFFSET_HEIGHT = 100, 100
 CUBE_LENGTH = WINDOW_HEIGHT // 20
 CUBE_WIDTH = WINDOW_WIDTH // 20
 CUBE_COLOR = CYAN
+CUBE_COLORS = [RED, BLUE, GREEN, YELLOW]
 
 CAR_LENGTH = WINDOW_HEIGHT / 10
 CAR_WIDTH = WINDOW_WIDTH / 10
@@ -120,8 +121,9 @@ def draw_robot(robot, window):
     return rotated_corners
 
 
-def draw_obstacles(window, obstacles):
-    [pygame.draw.rect(window, CUBE_COLOR, x) for x in obstacles]
+def draw_obstacles(window, blocks):
+    obstacles = [x.get_pos()[1:] for x in blocks]
+    [pygame.draw.rect(window, CUBE_COLORS[blocks[idx].orientation_id], x) for idx, x in enumerate(obstacles)]
 
 
 def draw_grid(window, map_shape=(20, 20)):
