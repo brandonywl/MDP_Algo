@@ -1,6 +1,6 @@
 from typing import List
 
-from map_tiles import drawing
+from utilities import drawing
 
 
 def has_collision(robot_point, obstacles):
