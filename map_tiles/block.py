@@ -17,19 +17,19 @@ class Block(Cell):
         if x > 16:
             output_space.remove(3)
         if y < 3:
-            output_space.remove(1)
-        if y > 16:
             output_space.remove(0)
+        if y > 16:
+            output_space.remove(1)
         return np.random.choice(output_space)
 
     @staticmethod
     def map_orientation_to_theta(orientation_id):
         # Follows up down left right
         map_orientation_to_theta = {
-            0: 0,
-            1: 180,
-            2: 270,
-            3: 90
+            0: 90,
+            1: 270,
+            2: 180,
+            3: 0
         }
         return map_orientation_to_theta[orientation_id]
 
