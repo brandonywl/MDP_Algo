@@ -1,7 +1,6 @@
 import numpy as np
 import pygame
 
-
 RED = (200, 0, 0)
 BLUE = (0, 0, 255)
 GREEN = (0, 155, 0)
@@ -74,15 +73,24 @@ def get_wheels_centers(car_x, car_y, car_length, car_width, orientation):
 def draw_rect(window, center, corners, rotation_angle, color):
 
     rotated_corners = compute_corners(center, corners, rotation_angle)
-    print("Robot Center")
-    print(center)
-    print("Rotated Corners")
-    print(rotated_corners)
 
     # draw rectangular polygon --> car body
     rect = pygame.draw.polygon(window, color,
                                (rotated_corners[0], rotated_corners[1], rotated_corners[2], rotated_corners[3]))
     return rect, rotated_corners
+
+
+def draw_rect_no_rotate(window, center, rotated_corners, rotation_angle, color):
+    rect = pygame.draw.polygon(window, color,
+                               (rotated_corners[0], rotated_corners[1], rotated_corners[2], rotated_corners[3]))
+    return rect, rotated_corners
+
+
+def get_robot_corners(car_x, car_y, rotation_angle):
+    corners = get_corners(car_x, car_y, CAR_LENGTH/4, CAR_WIDTH/2, 0.75*CAR_LENGTH, CAR_WIDTH/2)
+    rotated_corners = compute_corners([car_x, car_y], corners, rotation_angle)
+    return rotated_corners
+
 
 def draw_robot(robot, window):
     car_x = robot.x
@@ -90,11 +98,9 @@ def draw_robot(robot, window):
     orientation = robot.theta
     steering_angle = robot.steering_angle
 
-    corners = get_corners(car_x, car_y, CAR_LENGTH/4, CAR_WIDTH/2, 0.75*CAR_LENGTH, CAR_WIDTH/2)
-
     # car body
-    print("Draw_robot", car_x, car_y)
-    car, rotated_corners = draw_rect(window, [car_x, car_y], corners, orientation, CAR_COLOR)
+    rotated_corners = get_robot_corners(car_x, car_y, orientation)
+    car, rotated_corners = draw_rect_no_rotate(window, [car_x, car_y], rotated_corners, orientation, CAR_COLOR)
 
     # wheels
     wheels = get_wheels_centers(car_x, car_y, CAR_LENGTH, CAR_WIDTH, orientation)

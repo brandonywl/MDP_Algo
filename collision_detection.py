@@ -1,20 +1,16 @@
 from typing import List
 
 from map_tiles import drawing
-from map_tiles.drawing import get_corners, compute_corners, CAR_LENGTH, CAR_WIDTH
 
 
 def has_collision(robot_point, obstacles):
-    robot_corners = get_corners(robot_point.x, robot_point.y, CAR_LENGTH/2, 0.75*CAR_WIDTH, CAR_LENGTH/2, 0.25*CAR_WIDTH)
-    # print(robot_point.x, robot_point.y, robot_corners)
-    robot_centroid = robot_point.as_list()[:-1]
-    print(robot_centroid)
-    robot_corners = compute_corners(robot_centroid, robot_corners, robot_point.theta)
+    robot_corners = drawing.get_robot_corners(robot_point.x, robot_point.y, robot_point.theta)
 
     obstacles_corners = [drawing.get_block_corners(block) for block in obstacles]
 
     for i, obstacle in enumerate(obstacles_corners):
         if is_collided(robot_corners, obstacle):
+            print("Collision detected")
             return True
     return False
 

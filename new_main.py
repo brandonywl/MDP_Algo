@@ -79,15 +79,12 @@ while running:
                 delta_forward = 0.0
 
     curr_point = robot.get_point()
-    print(robot.x, robot.y)
-    print(curr_point.x, curr_point.y,  "Curr")
     next_point = move(curr_point, delta_steer, delta_forward, CAR_LENGTH, MAX_STEERING_ANGLE, COMMAND_FREQUENCY)
-    print(next_point.x, next_point.y)
-    print(next_point.as_list())
     # Test if next_point collides with any obstacle, else stop
-    has_collision = collision_detection.has_collision(next_point, blocks)
-
-    robot.set(next_point.x, next_point.y, next_point.theta, delta_steer)
-
+    if collision_detection.has_collision(next_point, blocks):
+        print("Cannot move!")
+        continue
+    else:
+        robot.set(next_point.x, next_point.y, next_point.theta, delta_steer)
 
 pygame.quit()

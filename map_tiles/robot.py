@@ -57,7 +57,6 @@ class Robot(Cell):
         theta = self.theta  # initial orientation
         alpha = turn  # steering angle
         dist = forward_velocity / frequency  # distance to be moved
-        print(dist, forward_velocity, frequency)
         length = self.car_length  # length of the robot
         if abs(alpha) > self.max_steering_angle:
             raise ValueError('Exceeding max steering angle')
