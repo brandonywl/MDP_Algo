@@ -127,9 +127,9 @@ def draw_obstacles(window, blocks):
 
 
 def draw_grid(window, map_shape=(20, 20)):
-    for i in range(1, map_shape[0]):
-        curr_x = CUBE_WIDTH * i
-        pygame.draw.line(window, WHITE, (curr_x, 0), (curr_x, WINDOW_HEIGHT))
-    for i in range(1, map_shape[0]):
-        curr_y = CUBE_LENGTH * i
-        pygame.draw.line(window, WHITE, (0, curr_y), (WINDOW_WIDTH, curr_y))
+    for i in range(0, map_shape[0]+1):
+        curr_x = CUBE_WIDTH * i + WINDOW_OFFSET_WIDTH
+        pygame.draw.line(window, WHITE, (curr_x, WINDOW_OFFSET_HEIGHT), (curr_x, WINDOW_HEIGHT + WINDOW_OFFSET_HEIGHT))
+    for i in range(0, map_shape[0]+1):
+        curr_y = CUBE_LENGTH * i + WINDOW_OFFSET_HEIGHT
+        pygame.draw.line(window, WHITE, (WINDOW_OFFSET_WIDTH, curr_y), (WINDOW_WIDTH + WINDOW_OFFSET_WIDTH, curr_y))

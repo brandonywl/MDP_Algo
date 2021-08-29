@@ -4,6 +4,7 @@ import utilities.utilities
 from map_tiles.cell import Cell
 from map_tiles.point import Point
 from utilities import drawing
+from utilities.drawing import WINDOW_OFFSET_WIDTH, WINDOW_OFFSET_HEIGHT
 
 
 class Block(Cell):
@@ -60,6 +61,11 @@ class Block(Cell):
         return Point(new_x, new_y, new_theta)
 
     @staticmethod
+    def offset_block(block):
+        block.x += WINDOW_OFFSET_WIDTH
+        block.y += WINDOW_OFFSET_HEIGHT
+
+    @staticmethod
     def generate_blocks(block_shape, count=1, seed=None, map_shape=(20, 20)):
         np.random.seed(seed) if seed else None
         blocks = []
@@ -81,7 +87,9 @@ class Block(Cell):
 
             orientation_id = Block.get_block_orientation(x, y)
             theta = Block.map_orientation_to_theta(orientation_id)
-            blocks.append(Block(theta, x, y, orientation_id, block_shape[0], block_shape[1]))
+            block = Block(theta, x, y, orientation_id, block_shape[0], block_shape[1])
+            Block.offset_block(block)
+            blocks.append(block)
         return blocks
 
     @staticmethod

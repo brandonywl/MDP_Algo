@@ -6,7 +6,8 @@ from map_tiles.robot import Robot
 from movement_models import collision_detection
 from movement_models.bicycle_movement_model import move
 from utilities import drawing
-from utilities.drawing import WINDOW_WIDTH, WINDOW_HEIGHT, CAR_WIDTH, CAR_LENGTH, CUBE_WIDTH, CUBE_LENGTH, CYAN
+from utilities.drawing import WINDOW_WIDTH, WINDOW_HEIGHT, CAR_WIDTH, CAR_LENGTH, CUBE_WIDTH, CUBE_LENGTH, CYAN, \
+    WINDOW_OFFSET_WIDTH, WINDOW_OFFSET_HEIGHT
 from utilities.utilities import cm_to_pixel
 
 CUBE_COLOR = CYAN
@@ -26,11 +27,11 @@ COLLISION_DETECTION_ON = True
 clock = pygame.time.Clock()
 
 pygame.init()
-window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+window = pygame.display.set_mode((WINDOW_WIDTH + 2*WINDOW_OFFSET_WIDTH, WINDOW_HEIGHT + 2*WINDOW_OFFSET_HEIGHT))
 
 # Generate blocks for the map
 blocks = Block.generate_blocks((CUBE_WIDTH, CUBE_LENGTH), 5)
-robot = Robot(np.radians(90), CAR_WIDTH/2, (WINDOW_HEIGHT - CAR_LENGTH/4), CAR_WIDTH, CAR_LENGTH)
+robot = Robot(np.radians(90), CAR_WIDTH/2 + WINDOW_OFFSET_WIDTH, (WINDOW_HEIGHT - CAR_LENGTH/4 + WINDOW_OFFSET_HEIGHT), CAR_WIDTH, CAR_LENGTH)
 block_pos = [x.get_pos()[1:] for x in blocks]
 
 running = True
@@ -65,7 +66,7 @@ while running:
             elif event.key == pygame.K_DOWN:
                 delta_forward = -MOVE_SPEED_PIXEL
             elif event.key == pygame.K_ESCAPE:
-                robot.set(CAR_WIDTH/2, WINDOW_HEIGHT-CAR_LENGTH/4, np.radians(90), 0)
+                robot.set(CAR_WIDTH/2 + WINDOW_OFFSET_WIDTH, WINDOW_HEIGHT-CAR_LENGTH/4+WINDOW_OFFSET_HEIGHT, np.radians(90), 0)
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_RIGHT or event.key == pygame.K_LEFT:
                 delta_steer = 0.0
