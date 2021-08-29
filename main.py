@@ -48,6 +48,9 @@ while running:
     # pygame.draw.line(window, WHITE, (drawing.CUBE_LENGTH, 0), (drawing.CUBE_LENGTH, 600))
     car = drawing.draw_robot(robot, window)
     drawing.draw_grid(window)
+    targets = [Block.get_target_point(block) for block in blocks]
+    orientation_ids = [block.orientation_id for block in blocks]
+    drawing.draw_targets(window, targets, orientation_ids)
 
     pygame.display.update()
     clock.tick(100)

@@ -3,8 +3,7 @@ import numpy as np
 import utilities.utilities
 from map_tiles.cell import Cell
 from map_tiles.point import Point
-from utilities import drawing
-from utilities.drawing import WINDOW_OFFSET_WIDTH, WINDOW_OFFSET_HEIGHT
+from utilities.drawing import WINDOW_OFFSET_WIDTH, WINDOW_OFFSET_HEIGHT, WINDOW_HEIGHT
 
 
 class Block(Cell):
@@ -12,7 +11,7 @@ class Block(Cell):
         super().__init__(theta, x, y, block_width, block_height)
         self.orientation_id = orientation_id
         self.image_id = None
-        self.range = utilities.utilities.cm_to_pixel(20, drawing.WINDOW_HEIGHT)
+        self.range = utilities.utilities.cm_to_pixel(20, WINDOW_HEIGHT)
 
     @staticmethod
     def get_block_orientation(x, y):

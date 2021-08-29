@@ -133,3 +133,19 @@ def draw_grid(window, map_shape=(20, 20)):
     for i in range(0, map_shape[0]+1):
         curr_y = CUBE_LENGTH * i + WINDOW_OFFSET_HEIGHT
         pygame.draw.line(window, WHITE, (WINDOW_OFFSET_WIDTH, curr_y), (WINDOW_WIDTH + WINDOW_OFFSET_WIDTH, curr_y))
+
+
+def draw_x(window, point, orientation_id):
+    left_x = point.x
+    top_y = point.y
+    right_x = left_x + CUBE_WIDTH
+    bot_y = top_y + CUBE_LENGTH
+
+    color = CUBE_COLORS[orientation_id]
+
+    pygame.draw.line(window, color, (left_x, top_y), (right_x, bot_y))
+    pygame.draw.line(window, color, (left_x, bot_y), (right_x, top_y))
+
+
+def draw_targets(window, targets, orientation_ids):
+    [draw_x(window, target, orientation_ids[idx]) for idx, target in enumerate(targets)]
