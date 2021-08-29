@@ -1,6 +1,9 @@
 import numpy as np
 
+import utilities.utilities
 from map_tiles.cell import Cell
+from map_tiles.point import Point
+from utilities import drawing
 
 
 class Block(Cell):
@@ -8,6 +11,7 @@ class Block(Cell):
         super().__init__(theta, x, y, block_width, block_height)
         self.orientation_id = orientation_id
         self.image_id = None
+        self.range = utilities.utilities.cm_to_pixel(20, drawing.WINDOW_HEIGHT)
 
     @staticmethod
     def get_block_orientation(x, y):
@@ -40,13 +44,35 @@ class Block(Cell):
         return x, y
 
     @staticmethod
+    def get_target_point(curr_block):
+        x = curr_block.x
+        y = curr_block.y
+        theta = np.radians(curr_block.theta)
+        delta_x = int(curr_block.range * np.cos(theta))
+        delta_y = int(curr_block.range * np.sin(theta))
+
+        # If facing rightward or downward, need to offset by 1 square
+        new_x = x + delta_x
+        new_y = y - delta_y
+
+        new_theta = np.radians(180) + theta
+
+        return Point(new_x, new_y, new_theta)
+
+    @staticmethod
     def generate_blocks(block_shape, count=1, seed=None, map_shape=(20, 20)):
         np.random.seed(seed) if seed else None
         blocks = []
         prev_loc = {}
         for _ in range(count):
             x, y = Block.get_new_xy(map_shape=map_shape)
-            while Block.is_invalid_block_location(x, y, map_shape) and (x in prev_loc and y in prev_loc[x]):
+
+            # # Test if clashes with any existing blocks
+            # (x in prev_loc and y in prev_loc[x]
+            # # Test if blocks any existing target node
+            # # Test if target node exists outside of the boundaries
+
+            while Block.is_invalid_block_location(x, y, map_shape) or (x in prev_loc and y in prev_loc[x]):
                 x, y = Block.get_new_xy(map_shape=map_shape)
             if x in prev_loc:
                 prev_loc[x].append(y)
@@ -77,3 +103,13 @@ class Block(Cell):
             return True
 
         return False
+
+
+if __name__ == "__main__":
+    # print(Block.is_invalid_block_location(0, 17))
+
+    blocks = Block.generate_blocks((10, 10), 4)
+    block = blocks[0]
+    print(block.x, block.y, block.theta)
+    target = Block.get_target_point(block)
+    print(target.x, target.y, target.theta)

@@ -1,12 +1,12 @@
 import numpy as np
 import pygame
 
+from map_tiles.block import Block
+from map_tiles.robot import Robot
 from movement_models import collision_detection
 from movement_models.bicycle_movement_model import move
 from utilities import drawing
-from map_tiles.block import Block
 from utilities.drawing import WINDOW_WIDTH, WINDOW_HEIGHT, CAR_WIDTH, CAR_LENGTH, CUBE_WIDTH, CUBE_LENGTH, CYAN
-from map_tiles.robot import Robot
 from utilities.utilities import cm_to_pixel
 
 CUBE_COLOR = CYAN
@@ -37,7 +37,6 @@ running = True
 
 delta_steer = 0
 delta_forward = 0
-
 
 
 while running:
