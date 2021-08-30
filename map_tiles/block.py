@@ -3,6 +3,7 @@ import numpy as np
 import utilities.utilities
 from map_tiles.cell import Cell
 from map_tiles.point import Point
+from utilities import drawing
 from utilities.drawing import WINDOW_OFFSET_WIDTH, WINDOW_OFFSET_HEIGHT, WINDOW_HEIGHT
 
 
@@ -11,7 +12,7 @@ class Block(Cell):
         super().__init__(theta, x, y, block_width, block_height)
         self.orientation_id = orientation_id
         self.image_id = None
-        self.range = utilities.utilities.cm_to_pixel(20, WINDOW_HEIGHT)
+        self.range = utilities.utilities.cm_to_pixel(30, WINDOW_HEIGHT)
 
     @staticmethod
     def get_block_orientation(x, y):
@@ -47,22 +48,78 @@ class Block(Cell):
     def get_target_point(curr_block):
         x = curr_block.x
         y = curr_block.y
-        theta = np.radians(curr_block.theta)
-        delta_x = int(curr_block.range * np.cos(theta))
-        delta_y = int(curr_block.range * np.sin(theta))
+        theta = curr_block.theta
+        range = curr_block.range
+        # delta_x = int(curr_block.range * np.cos(theta))
+        # delta_y = int(curr_block.range * np.sin(theta))
+        #
+        # new_x = x + delta_x
+        # new_y = y - delta_y
+        #
+        # new_theta = np.radians(180) + theta
 
-        # If facing rightward or downward, need to offset by 1 square
+        return Block.get_target_point_base(x, y, theta, range)
+
+    @staticmethod
+    def get_target_point_base(x, y, theta, view_range):
+        theta = np.radians(theta)
+        delta_x = int(view_range * np.cos(theta))
+        delta_y = int(view_range * np.sin(theta))
+
         new_x = x + delta_x
         new_y = y - delta_y
-
         new_theta = np.radians(180) + theta
 
         return Point(new_x, new_y, new_theta)
+
 
     @staticmethod
     def offset_block(block):
         block.x += WINDOW_OFFSET_WIDTH
         block.y += WINDOW_OFFSET_HEIGHT
+
+    @staticmethod
+    def is_between(new_xy, block_xy, target_xy):
+        x, y = new_xy[0], new_xy[1]
+        block_x = block_xy[0]
+        block_y = block_xy[1]
+        target_point_x = target_xy[0]
+        target_point_y = target_xy[1]
+        if block_x != target_point_x:
+            if block_x < target_point_x:
+                if block_x < x <= target_point_x:
+                    return True and block_y == y
+            else:
+                if target_point_x <= x < block_x:
+                    return True and block_y == y
+        else:
+            if block_y < target_point_y:
+                if block_y < y <= target_point_y:
+                    return True and block_x == x
+            else:
+                if target_point_y <= y < block_y:
+                    return True and block_x == x
+        return False
+
+    @staticmethod
+    def has_blocked_targets(new_pos, blocks):
+        if not blocks:
+            return False
+        x = new_pos[0] * blocks[0].cell_width
+        y = new_pos[1] * blocks[0].cell_height
+        theta = new_pos[2]
+        view_range = blocks[0].range
+        new_target_point = Block.get_target_point_base(x, y, theta, view_range)
+        for block in blocks:
+            block_xy = (block.x, block.y)
+            target_point = Block.get_target_point(block)
+            target_point_xy = (target_point.x, target_point.y)
+            if Block.is_between((x, y), block_xy, target_point_xy):
+                return True
+            if Block.is_between(block_xy, (x, y), (new_target_point.x, new_target_point.y)):
+                return True
+        return False
+
 
     @staticmethod
     def generate_blocks(block_shape, count=1, seed=None, map_shape=(20, 20)):
@@ -71,14 +128,12 @@ class Block(Cell):
         prev_loc = {}
         for _ in range(count):
             x, y = Block.get_new_xy(map_shape=map_shape)
-
-            # # Test if clashes with any existing blocks
-            # (x in prev_loc and y in prev_loc[x]
-            # # Test if blocks any existing target node
-            # # Test if target node exists outside of the boundaries
-
-            while Block.is_invalid_block_location(x, y, map_shape) or (x in prev_loc and y in prev_loc[x]):
+            orientation_id = Block.get_block_orientation(x, y)
+            theta = Block.map_orientation_to_theta(orientation_id)
+            while Block.is_illegal_block_placement((x, y, theta), blocks, map_shape, prev_loc):
                 x, y = Block.get_new_xy(map_shape=map_shape)
+                orientation_id = Block.get_block_orientation(x, y)
+                theta = Block.map_orientation_to_theta(orientation_id)
             if x in prev_loc:
                 prev_loc[x].append(y)
             else:
@@ -111,12 +166,43 @@ class Block(Cell):
 
         return False
 
+    @staticmethod
+    def is_illegal_block_placement(new_pos, blocks, map_shape, prev_loc):
+        x = new_pos[0]
+        y = new_pos[1]
+        print("New pos", new_pos)
+        for idx, block in enumerate(blocks):
+            print("Block", idx, block.x, block.y, block.theta)
+        # # Test if block is currently in use
+        clashes = x in prev_loc and y in prev_loc[x]
+        print(clashes)
+        # # Test if blocks any existing target node
+        clashes = clashes or Block.has_blocked_targets(new_pos, blocks)
+        print(clashes)
+        # # Test if target node exists outside of the boundaries
+        clashes = clashes or Block.is_invalid_block_location(x, y, map_shape)
+        # # Test if target node is blocked
+
+        print(clashes)
+        print()
+        return clashes
+
 
 if __name__ == "__main__":
     # print(Block.is_invalid_block_location(0, 17))
 
-    blocks = Block.generate_blocks((10, 10), 4)
-    block = blocks[0]
-    print(block.x, block.y, block.theta)
-    target = Block.get_target_point(block)
-    print(target.x, target.y, target.theta)
+    # blocks = Block.generate_blocks((10, 10), 4)
+    # block = blocks[0]
+    # print(block.x, block.y, block.theta)
+    # target = Block.get_target_point(block)
+    # print(target.x, target.y, target.theta)
+
+    block = Block(180, 18, 16, 1, drawing.CUBE_WIDTH, drawing.CUBE_LENGTH)
+    new_x, new_y, theta = 19, 16, 180
+
+    print(Block.has_blocked_targets((new_x, new_y, theta), [block]))
+
+    # block = Block(0, 0, 0, 3, drawing.CUBE_WIDTH, drawing.CUBE_LENGTH)
+    # new_x, new_y, theta = 1, 0, 0
+    #
+    # print(Block.has_blocked_targets((new_x, new_y, theta), [block]))
