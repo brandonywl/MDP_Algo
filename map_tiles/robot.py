@@ -1,6 +1,8 @@
 import numpy as np
 
+from map_tiles.block import Block
 from map_tiles.cell import Cell
+from utilities.drawing import CUBE_WIDTH, CUBE_LENGTH
 
 
 class Robot(Cell):
@@ -17,6 +19,9 @@ class Robot(Cell):
         self.forward_noise = 0.0
         self.turn_noise = 0.0
         self.sense_noise = 0.0
+
+    def get_state(self):
+        return [[np.degrees(self.theta), self.x, self.y, 0]]
 
     def set(self, x, y, orientation, steering_angle):
         # if x >= world_size or x < 0:
@@ -41,7 +46,40 @@ class Robot(Cell):
         self.turn_noise = t_noise
         self.sense_noise = s_noise
 
+    def get_camera_fov(self):
+        pass
 
+    def get_min_euclidean_distance(self, blocks):
+        # unidentified_blocks = []
+        # for idx, block in enumerate(blocks):
+        #     if block.get_state()[-1] == 0:
+        #         unidentified_blocks.append(idx)
+
+        target_points = [Block.get_target_point(block) for block in blocks]
+        euclidean_dist = [self.get_euclidean_distance(target) for target in target_points]
+
+        min_dist = None
+        min_idx = None
+
+        for idx, block in enumerate(blocks):
+            if block.get_state()[-1] == 0:
+                curr_dist = euclidean_dist[idx]
+                if min_dist is None or curr_dist < min_dist:
+                    min_dist = curr_dist
+                    min_idx = idx
+        if min_dist is None or min_idx is None:
+            return 0
+
+
+        return min_idx, min_dist
+
+    def get_euclidean_distance(self, target_point):
+        curr_point = self.get_point()
+        # target_point = block.get_target_point()
+        # Center target_point coordinates
+        target_point.x += CUBE_WIDTH // 2
+        target_point.y += CUBE_LENGTH // 2
+        return curr_point.get_euclidean_dist(target_point)
 
     def move(self, turn, forward_velocity, frequency=1):
         """

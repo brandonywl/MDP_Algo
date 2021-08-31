@@ -13,6 +13,13 @@ class Block(Cell):
         self.orientation_id = orientation_id
         self.image_id = None
         self.range = utilities.utilities.cm_to_pixel(30, WINDOW_HEIGHT)
+        self.identified = 0
+
+    def get_state(self):
+        return self.theta, self.x, self.y, self.identified
+
+    def print_block(self):
+        print("Theta:", self.theta, "\tx:", self.x, "\ty:", self.y, "\tidentified:", self.identified )
 
     @staticmethod
     def get_block_orientation(x, y):
@@ -69,6 +76,9 @@ class Block(Cell):
         new_x = x + delta_x
         new_y = y - delta_y
         new_theta = np.radians(180) + theta
+
+        if new_theta > np.radians(360):
+            new_theta -= np.radians(360)
 
         return Point(new_x, new_y, new_theta)
 
@@ -170,21 +180,21 @@ class Block(Cell):
     def is_illegal_block_placement(new_pos, blocks, map_shape, prev_loc):
         x = new_pos[0]
         y = new_pos[1]
-        print("New pos", new_pos)
-        for idx, block in enumerate(blocks):
-            print("Block", idx, block.x, block.y, block.theta)
+        # print("New pos", new_pos)
+        # for idx, block in enumerate(blocks):
+        #     print("Block", idx, block.x, block.y, block.theta)
         # # Test if block is currently in use
         clashes = x in prev_loc and y in prev_loc[x]
-        print(clashes)
+        # print(clashes)
         # # Test if blocks any existing target node
         clashes = clashes or Block.has_blocked_targets(new_pos, blocks)
-        print(clashes)
+        # print(clashes)
         # # Test if target node exists outside of the boundaries
         clashes = clashes or Block.is_invalid_block_location(x, y, map_shape)
         # # Test if target node is blocked
 
-        print(clashes)
-        print()
+        # print(clashes)
+        # print()
         return clashes
 
 
