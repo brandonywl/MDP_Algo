@@ -1,5 +1,3 @@
-from random import random
-
 import numpy as np
 
 from reinforcement_learning.q_agent import QAgent
@@ -42,7 +40,7 @@ class QNNAgent(QAgent):
         q_state = self.model.predict(state)
         # Greedy action = argmax(q_state)
         action_greedy = np.argmax(q_state)
-        action_random = random.randint(0, self.action_size - 1)
+        action_random = np.randint(0, self.action_size)
         return action_random if np.random.uniform() < self.eps else action_greedy
 
     def one_hot(self, inpt, size, ax=0, dtype='float32'):
