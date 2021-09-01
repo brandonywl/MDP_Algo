@@ -1,6 +1,8 @@
 # Agent that uses a Q-Lookup Table (Specific form of Q-Learning) to approximate it's value function
 import numpy as np
 
+from reinforcement_learning.r_agent import RAgent
+
 
 class QAgent(RAgent):
     def __init__(self, env, eps=1.00, discount_rate=0.99, learning_rate=0.01):
@@ -10,11 +12,11 @@ class QAgent(RAgent):
         self.learning_rate = learning_rate
         self.plot = None
         self.total_rewards = None
-        self.build_table()
+        # self.build_table()
 
     # This assumes a discrete action and observation state
-    def build_table(self):
-        self.q_table = 1e-4 * np.random.random([self.observation_size, self.action_size])
+    # def build_table(self):
+    #     self.q_table = 1e-4 * np.random.random([self.observation_size, self.action_size])
 
     def get_action(self, state):
         if np.random.uniform() < self.eps:

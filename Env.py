@@ -44,6 +44,7 @@ class Env:
         self.blocks = self.robot = self.block_pos = None
         self.setup_map()
         self.observation_space = self.get_state()
+        self.observation_shape = self.observation_space.shape
 
         if display:
             self.window = pygame.display.set_mode((WINDOW_WIDTH + 2 * WINDOW_OFFSET_WIDTH,

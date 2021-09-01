@@ -1,13 +1,23 @@
 import numpy as np
+import tensorflow as tf
 
 from reinforcement_learning.q_agent import QAgent
+from reinforcement_learning.r_agent import RAgent
 
 
-class QNNAgent(QAgent):
+class QNNAgent(RAgent):
+    def __init__(self, env, eps=1.00, discount_rate=0.99, learning_rate=0.01):
+        super().__init__(env)
+        self.eps = eps
+        self.discount_rate = discount_rate
+        self.learning_rate = learning_rate
+        self.plot = None
+        self.total_rewards = None
+
     def build_table(self):
         self.model = tf.keras.models.Sequential(
             [
-                tf.keras.layers.Dense(self.observation_size, input_shape=[self.observation_size]),
+                tf.keras.layers.Dense(self.observation_shape, input_shape=[self.observation_shape]),
                 tf.keras.layers.Dense(32, activation='relu'),
                 tf.keras.layers.Dense(self.action_size)
             ]
@@ -40,7 +50,7 @@ class QNNAgent(QAgent):
         q_state = self.model.predict(state)
         # Greedy action = argmax(q_state)
         action_greedy = np.argmax(q_state)
-        action_random = np.randint(0, self.action_size)
+        action_random = np.random.randint(0, self.action_size)
         return action_random if np.random.uniform() < self.eps else action_greedy
 
     def one_hot(self, inpt, size, ax=0, dtype='float32'):
