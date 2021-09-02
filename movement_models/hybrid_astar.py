@@ -2,18 +2,24 @@ import math
 import heapq
 import matplotlib.pyplot as plt
 
+from map_tiles.point import Point
+from movement_models import bicycle_movement_model
+from utilities import drawing
+
+
 class Hybrid_AStar:
 
     def __init__(self, start, end):
-        self.vehicle_length = 5
+        self.vehicle_length = drawing.CAR_LENGTH
+        print(self.vehicle_length)
 
         self.start = start
         self.end = end
 
         self.min_x = 0
-        self.max_x = 600
+        self.max_x = 800
         self.min_y = 0
-        self.max_y = 600
+        self.max_y = 800
 
         self.steering_angles = [-30, 0, 30]
         self.add_steering_costs = [0.1, 0, 0.1]
@@ -78,10 +84,15 @@ class Hybrid_AStar:
 
             visited_dict[chosen_d_node] = open_dict[chosen_d_node]
 
-            if self.euc_dist(chosen_d_node, end) < 0.5:
+            diff = self.end[2] - chosen_c_node[2]
+            diff = (diff + 180) % 360 - 180
+            diff = 0
+
+            if self.euc_dist(chosen_d_node, end) < 15 and abs(diff) < 20:
                 print("We are done???")
                 print("count: ", count)
                 # print("visited_dict: ", visited_dict)
+                print("Current continuous", chosen_c_node)
                 print()
 
                 reversed_final_path = [(chosen_d_node, chosen_c_node)]
@@ -115,11 +126,15 @@ class Hybrid_AStar:
                     cost_to_neighbour_from_start = chosen_node_total_cost - self.euc_dist(chosen_d_node, end) 
 
                     # continuous coordinates
-                    neighbour_x_cts = chosen_c_node[0] + (velocity * math.cos(math.radians(chosen_c_node[2]))) 
+                    neighbour_x_cts = chosen_c_node[0] + (velocity * math.cos(math.radians(chosen_c_node[2])))
                     neighbour_y_cts = chosen_c_node[1] - (velocity * math.sin(math.radians(chosen_c_node[2])))
                     neighbour_theta_cts = math.radians(chosen_c_node[2]) + \
                                              (velocity * math.tan(math.radians(steering_angle)) / (float(self.vehicle_length)))
                     neighbour_theta_cts = math.degrees(neighbour_theta_cts)
+
+                    # axel_point = Point(chosen_c_node[0], chosen_c_node[1], chosen_c_node[2])
+                    # next_point = bicycle_movement_model.move(axel_point, steering_angle, velocity, self.vehicle_length, 90)
+                    # neighbour_x_cts, neighbour_y_cts, neighbour_theta_cts = next_point.as_list(False)
 
                     # discrete coordinates
                     neighbour_x_d = self.round(neighbour_x_cts)
@@ -137,6 +152,7 @@ class Hybrid_AStar:
                         total_cost = heuristic_cost + cost_to_neighbour_from_start
 
                         skip = 0
+
                         if neighbour[0] in open_dict:
                             if total_cost > open_dict[neighbour[0]][0]:
                                 skip = 1

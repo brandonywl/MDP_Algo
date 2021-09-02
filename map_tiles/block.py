@@ -57,13 +57,6 @@ class Block(Cell):
         y = curr_block.y
         theta = curr_block.theta
         range = curr_block.range
-        # delta_x = int(curr_block.range * np.cos(theta))
-        # delta_y = int(curr_block.range * np.sin(theta))
-        #
-        # new_x = x + delta_x
-        # new_y = y - delta_y
-        #
-        # new_theta = np.radians(180) + theta
 
         return Block.get_target_point_base(x, y, theta, range)
 
