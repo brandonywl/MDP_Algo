@@ -14,27 +14,38 @@ from utilities.utilities import cm_to_pixel
 
 
 class Env:
-    def __init__(self, display=True):
+    def __init__(self, display=True, num_blocks=5):
         self.map_shape = (20, 20)
         self.window_shape = (600, 600)
 
-        self.NUM_BLOCKS = 5
+        self.NUM_BLOCKS = num_blocks
 
-        self.COMMAND_FREQUENCY = 20
+        self.COMMAND_FREQUENCY = 1
         self.MOVE_SPEED = 10
         self.MOVE_SPEED_PIXEL = cm_to_pixel(self.MOVE_SPEED)
 
         self.STEERING_ANGLE = 30
         self.MAX_STEERING_ANGLE = 45
 
+        self.has_collision = False
+
+        # self.action_space = [
+        #     (0, 0),
+        #     (-self.STEERING_ANGLE, self.MOVE_SPEED),
+        #     (0, self.MOVE_SPEED),
+        #     (self.STEERING_ANGLE, self.MOVE_SPEED),
+        #     (-self.STEERING_ANGLE, -self.MOVE_SPEED),
+        #     (0, -self.MOVE_SPEED),
+        #     (self.STEERING_ANGLE, -self.MOVE_SPEED)
+        # ]
+
         self.action_space = [
-            (0, 0),
             (-self.STEERING_ANGLE, self.MOVE_SPEED),
             (0, self.MOVE_SPEED),
             (self.STEERING_ANGLE, self.MOVE_SPEED),
-            (-self.STEERING_ANGLE, -self.MOVE_SPEED),
-            (0, -self.MOVE_SPEED),
-            (self.STEERING_ANGLE, -self.MOVE_SPEED)
+            # (-self.STEERING_ANGLE, -self.MOVE_SPEED),
+            # (0, -self.MOVE_SPEED),
+            # (self.STEERING_ANGLE, -self.MOVE_SPEED)
         ]
 
         self.COLLISION_DETECTION_ON = True
@@ -78,6 +89,7 @@ class Env:
                 print("Cannot move!")
                 set_point = False
                 next_point = curr_point
+                self.has_collision = True
         if set_point:
             self.robot.set(next_point.x, next_point.y, next_point.theta, delta_steer)
 
@@ -129,6 +141,11 @@ class Env:
         self.update()
         return output
 
+    def update_step_base(self, delta_steer, delta_forward):
+        output = self.step_base(delta_steer, delta_forward)
+        self.update()
+        return output
+
     def setup_map(self):
         self.blocks = Block.generate_blocks((CUBE_WIDTH, CUBE_LENGTH), 5)
         self.robot = Robot(np.radians(90), CAR_WIDTH / 2 + WINDOW_OFFSET_WIDTH,
@@ -139,6 +156,7 @@ class Env:
         self.setup_map()
         self.done = False
         self.step_count = 0
+        return self.get_state()
 
     def reset_robot(self):
 
@@ -162,21 +180,29 @@ class Env:
         curr_reward = 0
         # Reward it for going close to a target node
         idx, e_dist = self.robot.get_min_euclidean_distance(self.blocks)
-        if e_dist < 10:
+        curr_reward += 1/e_dist*100
+        if e_dist < 20 and abs(self.robot.theta - np.radians(self.blocks[idx].theta)) < np.radians(20):
             print("Block detected!")
-            curr_reward += 10
+            curr_reward += (1/e_dist)*1000
             self.blocks[idx].identified = 1
 
         # Finished environment
         # for block in self.blocks:
         #     block.print_block()
         if sum([block.get_state()[-1] for block in self.blocks]) == self.NUM_BLOCKS:
-            curr_reward += 50
+            curr_reward += (1/e_dist)*10000
             print("env.done set: Finished")
             self.done = True
 
+        if self.has_collision:
+            curr_reward *= 0.1
+        self.has_collision = False
+
         return curr_reward
 
+    def is_done(self):
+        if self.has_collision:
+            self.done = True
 
 
 if __name__ == '__main__':

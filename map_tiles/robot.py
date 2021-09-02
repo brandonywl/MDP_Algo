@@ -70,7 +70,6 @@ class Robot(Cell):
         if min_dist is None or min_idx is None:
             return 0
 
-
         return min_idx, min_dist
 
     def get_euclidean_distance(self, target_point):

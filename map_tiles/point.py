@@ -7,8 +7,11 @@ class Point:
         self.y = y
         self.theta = theta
 
-    def as_list(self):
-        return [self.x, self.y] if self.theta is None else [self.x, self.y, self.theta]
+    def as_list(self, radians=True):
+        if radians:
+            return [self.x, self.y] if self.theta is None else [self.x, self.y, self.theta]
+        else:
+            return [self.x, self.y] if self.theta is None else [self.x, self.y, np.degrees(self.theta)]
 
     def get_euclidean_dist(self, next_point):
         if self.theta is None:
