@@ -35,7 +35,7 @@ class Hybrid_AStar:
 
         return output
 
-    def round(self, x, prec=2, base=2):
+    def round(self, x, prec=2, base=1):
         return round(base * round(float(x) / base), prec)
 
     def run(self):
@@ -84,11 +84,11 @@ class Hybrid_AStar:
 
             visited_dict[chosen_d_node] = open_dict[chosen_d_node]
 
-            diff = self.end[2] - chosen_c_node[2]
-            diff = (diff + 180) % 360 - 180
-            diff = 0
+            # diff = self.end[2] - chosen_c_node[2]
+            # diff = (diff + 180) % 360 - 180
+            # diff = 0
 
-            if self.euc_dist(chosen_d_node, end) < 15 and abs(diff) < 20:
+            if self.euc_dist(chosen_d_node, end) < 20:
                 print("We are done???")
                 print("count: ", count)
                 # print("visited_dict: ", visited_dict)
@@ -133,9 +133,9 @@ class Hybrid_AStar:
                     neighbour_theta_cts = math.degrees(neighbour_theta_cts)
 
                     # axel_point = Point(chosen_c_node[0], chosen_c_node[1], chosen_c_node[2])
-                    # next_point = bicycle_movement_model.move(axel_point, steering_angle, velocity, self.vehicle_length, 90)
+                    # next_point = bicycle_movement_model.move(axel_point, steering_angle, velocity, self.vehicle_length, 90, 60)
                     # neighbour_x_cts, neighbour_y_cts, neighbour_theta_cts = next_point.as_list(False)
-
+                    # print(next_point.as_list(False))
                     # discrete coordinates
                     neighbour_x_d = self.round(neighbour_x_cts)
                     neighbour_y_d = self.round(neighbour_y_cts)

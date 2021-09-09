@@ -29,24 +29,24 @@ class Env:
 
         self.has_collision = False
 
-        # self.action_space = [
-        #     (0, 0),
-        #     (-self.STEERING_ANGLE, self.MOVE_SPEED),
-        #     (0, self.MOVE_SPEED),
-        #     (self.STEERING_ANGLE, self.MOVE_SPEED),
-        #     (-self.STEERING_ANGLE, -self.MOVE_SPEED),
-        #     (0, -self.MOVE_SPEED),
-        #     (self.STEERING_ANGLE, -self.MOVE_SPEED)
-        # ]
-
         self.action_space = [
+            (0, 0),
             (-self.STEERING_ANGLE, self.MOVE_SPEED),
             (0, self.MOVE_SPEED),
             (self.STEERING_ANGLE, self.MOVE_SPEED),
-            # (-self.STEERING_ANGLE, -self.MOVE_SPEED),
-            # (0, -self.MOVE_SPEED),
-            # (self.STEERING_ANGLE, -self.MOVE_SPEED)
+            (-self.STEERING_ANGLE, -self.MOVE_SPEED),
+            (0, -self.MOVE_SPEED),
+            (self.STEERING_ANGLE, -self.MOVE_SPEED)
         ]
+
+        # self.action_space = [
+        #     (-self.STEERING_ANGLE, self.MOVE_SPEED),
+        #     (0, self.MOVE_SPEED),
+        #     (self.STEERING_ANGLE, self.MOVE_SPEED),
+        #     # (-self.STEERING_ANGLE, -self.MOVE_SPEED),
+        #     # (0, -self.MOVE_SPEED),
+        #     # (self.STEERING_ANGLE, -self.MOVE_SPEED)
+        # ]
 
         self.COLLISION_DETECTION_ON = True
         self.done = False
@@ -56,6 +56,8 @@ class Env:
         self.setup_map()
         self.observation_space = self.get_state()
         self.observation_shape = self.observation_space.shape
+
+        self.planned_path = None
 
         if display:
             self.window = pygame.display.set_mode((WINDOW_WIDTH + 2 * WINDOW_OFFSET_WIDTH,
@@ -130,6 +132,11 @@ class Env:
 
         # Print robot
         car = drawing.draw_robot(self.robot, self.window)
+
+        # Print planned path if present
+        if self.planned_path is not None:
+            drawing.draw_path(self.window, self.planned_path)
+
         pygame.display.update()
 
     def update_step(self, action_idx):

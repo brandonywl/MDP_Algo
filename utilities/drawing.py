@@ -149,3 +149,9 @@ def draw_x(window, point, orientation_id):
 
 def draw_targets(window, targets, orientation_ids):
     [draw_x(window, target, orientation_ids[idx]) for idx, target in enumerate(targets)]
+
+
+def draw_path(window, movements):
+    continuous_path = list(zip(*movements))[1]
+    for movement in continuous_path:
+        pygame.draw.circle(window, WHITE, movement[:2], 2)
