@@ -3,13 +3,14 @@ import heapq
 import matplotlib.pyplot as plt
 
 from map_tiles.point import Point
-from movement_models import bicycle_movement_model
+from movement_models import bicycle_movement_model, collision_detection
+from movement_models.bicycle_movement_model import backaxel_move
 from utilities import drawing
 
 
 class Hybrid_AStar:
 
-    def __init__(self, start, end):
+    def __init__(self, start, end, obstacles):
         self.vehicle_length = drawing.CAR_LENGTH
         print(self.vehicle_length)
 
@@ -26,6 +27,8 @@ class Hybrid_AStar:
 
         self.velocity = [-10, 10]
         self.add_velocity_costs = [1, 0]
+
+        self.obstacles = obstacles
 
     def euc_dist(self, position, target):
         diff_x = position[0] - target[0]
@@ -126,15 +129,19 @@ class Hybrid_AStar:
                     cost_to_neighbour_from_start = chosen_node_total_cost - self.euc_dist(chosen_d_node, end) 
 
                     # continuous coordinates
-                    neighbour_x_cts = chosen_c_node[0] + (velocity * math.cos(math.radians(chosen_c_node[2])))
-                    neighbour_y_cts = chosen_c_node[1] - (velocity * math.sin(math.radians(chosen_c_node[2])))
-                    neighbour_theta_cts = math.radians(chosen_c_node[2]) + \
-                                             (velocity * math.tan(math.radians(steering_angle)) / (float(self.vehicle_length)))
-                    neighbour_theta_cts = math.degrees(neighbour_theta_cts)
+                    # neighbour_x_cts = chosen_c_node[0] + (velocity * math.cos(math.radians(chosen_c_node[2])))
+                    # neighbour_y_cts = chosen_c_node[1] - (velocity * math.sin(math.radians(chosen_c_node[2])))
+                    # neighbour_theta_cts = math.radians(chosen_c_node[2]) + \
+                    #                          (velocity * math.tan(math.radians(steering_angle)) / (float(self.vehicle_length)))
+                    # neighbour_theta_cts = math.degrees(neighbour_theta_cts)
 
-                    # axel_point = Point(chosen_c_node[0], chosen_c_node[1], chosen_c_node[2])
-                    # next_point = bicycle_movement_model.move(axel_point, steering_angle, velocity, self.vehicle_length, 90, 60)
-                    # neighbour_x_cts, neighbour_y_cts, neighbour_theta_cts = next_point.as_list(False)
+                    axel_point = Point(chosen_c_node[0], chosen_c_node[1], math.radians(chosen_c_node[2]))
+                    next_point = backaxel_move(axel_point, velocity, math.radians(steering_angle), self.vehicle_length)
+                    neighbour_x_cts, neighbour_y_cts, neighbour_theta_cts = next_point.as_list(False)
+
+                    if collision_detection.has_collision(next_point, self.obstacles):
+                        continue
+
                     # print(next_point.as_list(False))
                     # discrete coordinates
                     neighbour_x_d = self.round(neighbour_x_cts)
@@ -143,6 +150,7 @@ class Hybrid_AStar:
 
                     neighbour = ((neighbour_x_d, neighbour_y_d, neighbour_theta_d), 
                                     (neighbour_x_cts, neighbour_y_cts, neighbour_theta_cts))
+
 
                     if neighbour_x_d >= self.min_x and neighbour_x_d < self.max_x \
                         and neighbour_y_d >= self.min_y and neighbour_y_d < self.max_y:

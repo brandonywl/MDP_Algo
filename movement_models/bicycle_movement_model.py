@@ -6,14 +6,14 @@ from map_tiles.point import Point
 def move(point, turn, forward_velocity, robot_length, robot_max_steering_angle, frequency=1):
     """
     Moves a single timestep given turn and forward. How long a timestep is can be controlled with frequency.
-    :param turn: Steering angle of the rear-wheeled vehicle.
+    :param point: Starting point. Requires radians
+    :param turn: Steering angle of the rear-wheeled vehicle. Requires radians
     :param forward_velocity: Velocity of the car in pixel/instance or pixel/s.
     :param frequency: Controls delta time factor to convert to distance. If forward_velocity is provided in cm/s
     and converted to pixels/s, frequency will be 1/T where T is how long we want to stay in each command for the
     robot to move.
     :return: x,y, theta of the next state
     """
-
     theta = point.theta  # initial orientation
     alpha = turn  # steering angle
     dist = forward_velocity / frequency  # distance to be moved
@@ -54,3 +54,18 @@ def move(point, turn, forward_velocity, robot_length, robot_max_steering_angle, 
     # self.x %= world_size
     # self.y %= world_size
     return final_point
+
+def backaxel_move(point, velocity, steering_angle, vehicle_length, frequency=1):
+    """
+
+    :param point: Starting point. Theta in radians
+    :param velocity: Velocity in pixel/s
+    :param steering_angle: Steering angle in radians
+    :param vehicle_length: Vehicle length in pixels
+    :return: Next point
+    """
+    velocity /= frequency
+    new_x = point.x + np.cos(point.theta) * velocity
+    new_y = point.y - np.sin(point.theta) * velocity
+    new_theta = point.theta + (velocity * np.tan(steering_angle) / (float(vehicle_length)))
+    return Point(new_x, new_y, new_theta)

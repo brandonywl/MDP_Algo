@@ -10,7 +10,7 @@ def has_collision(robot_point, obstacles):
 
     for i, obstacle in enumerate(obstacles_corners):
         if is_collided(robot_corners, obstacle):
-            print("Collision detected")
+            # print("Collision detected")
             return True
     return False
 

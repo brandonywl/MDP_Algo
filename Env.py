@@ -6,7 +6,7 @@ import pygame
 from map_tiles.block import Block
 from map_tiles.robot import Robot
 from movement_models import collision_detection
-from movement_models.bicycle_movement_model import move
+from movement_models.bicycle_movement_model import move, backaxel_move
 from utilities import drawing
 from utilities.drawing import CUBE_WIDTH, CUBE_LENGTH, CAR_WIDTH, CAR_LENGTH, WINDOW_HEIGHT, WINDOW_WIDTH, \
     WINDOW_OFFSET_WIDTH, WINDOW_OFFSET_HEIGHT
@@ -84,8 +84,10 @@ class Env:
         self.step_count += 1
         set_point = True
         curr_point = self.robot.get_point()
-        next_point = move(curr_point, delta_steer, delta_forward, CAR_LENGTH,
-                          self.MAX_STEERING_ANGLE, self.COMMAND_FREQUENCY)
+        # next_point = move(curr_point, delta_steer, delta_forward, CAR_LENGTH,
+        #                   self.MAX_STEERING_ANGLE, self.COMMAND_FREQUENCY)
+        print(delta_forward)
+        next_point = backaxel_move(curr_point, delta_forward, delta_steer, CAR_LENGTH)
         if self.COLLISION_DETECTION_ON:
             if collision_detection.has_collision(next_point, self.blocks):
                 print("Cannot move!")
@@ -154,7 +156,7 @@ class Env:
         return output
 
     def setup_map(self):
-        self.blocks = Block.generate_blocks((CUBE_WIDTH, CUBE_LENGTH), 5)
+        self.blocks = Block.generate_blocks((CUBE_WIDTH, CUBE_LENGTH), self.NUM_BLOCKS)
         self.robot = Robot(np.radians(90), CAR_WIDTH / 2 + WINDOW_OFFSET_WIDTH,
                            (WINDOW_HEIGHT - CAR_LENGTH / 4 + WINDOW_OFFSET_HEIGHT), CAR_WIDTH, CAR_LENGTH)
         self.block_pos = [x.get_pos()[1:] for x in self.blocks]
