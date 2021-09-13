@@ -14,7 +14,7 @@ class Action:
         self.isRadians = True
         self.streamlineTurning()
 
-    # if action is a turn checks if value > pi, if so, reverse direction and turn 2*pi - value
+    # if action is a turn, checks if value > pi, if so, reverse direction and turn 2*pi - value
     def streamlineTurning(self):
         if self.steering != 0 and self.value > math.pi:
             self.gear *= -1
@@ -27,9 +27,15 @@ class Action:
 
     # convert value from radians to degrees for better readability
     def convertToDegrees(self):
-        if self.steering != 0:
+        if self.steering != 0 and self.isRadians:
             self.value = math.degrees(self.value)
             self.isRadians = False
+
+    # convert value from degrees to radians
+    def convertToRadians(self):
+        if self.steering != 0 and not self.isRadians:
+            self.value = math.radians(self.value)
+            self.isRadians = True
 
     #convert action to list of discrete instructions (velocity, steeringAngle) to be sent every instructionPeriod
     #ASSUME that output positive steering angle is left and negative steering angle is right, CHECK LATER
@@ -79,7 +85,7 @@ class Reeds_Shepp:
             value += 2 * math.pi
         return value
 
-    # returns polar coordinates (r, theta) of the point (x, y)
+    # returns polar coordinates (r, theta) of the point (x, y), theta in radians
     def getPolar(self, x, y):
         r = math.sqrt(x ** 2 + y ** 2)
         theta = math.atan2(y, x)
@@ -94,7 +100,6 @@ class Reeds_Shepp:
         theta = target[2] - source[2]
         x = x1 * math.cos(math.radians(target[2])) - y1 * math.sin(math.radians(target[2]))
         y = x1 * math.sin(math.radians(target[2])) + y1 * math.cos(math.radians(target[2]))
-
         #print("After converting to relative coordinates, target is now: (" + str(x) + ", " + str(y) + ", " + str(
         #   theta) + ")")
         return (x, y, theta)
@@ -357,10 +362,11 @@ class Reeds_Shepp:
     #METHOD TO RUN THE PATHFINDING ALGO
     def run(self):
         # convert target coordinates to be relative to source
+
         target = self.relativeCoordinateConversion(self.target, self.source)
 
         # convert units to achieve unit radius
-        target = self.unitRadiusConversion(self.target, self.turningRadius)
+        target = self.unitRadiusConversion(target, self.turningRadius)
         # print("After conversion using turningRadius, target is now: (" + str(target[0]) + ", " + str(target[1]) + ", " + str(target[2]) + ")")
 
         reedsSheppFunctions = [self.LfSfLf, self.LfSfRf, self.LfRbLf, self.LfRbLb, self.LfRfLbRb, self.LfRbLbRf, self.LfRbSbLb, self.LfRbSbRb, self.LfRbSbLbRf]
@@ -373,11 +379,11 @@ class Reeds_Shepp:
                 for flipGear in flip:
                     for flipOrder in flip:
                         if flipSteering == 1:
-                            self.flipSteeringTransform(target)
+                            target = self.flipSteeringTransform(target)
                         if flipGear == 1:
-                            self.flipGearTransform(target)
+                            target = self.flipGearTransform(target)
                         if flipOrder == 1:
-                            self.flipOrderTransform(target)
+                            target = self.flipOrderTransform(target)
                         cost, actionSet = fn(target, flipSteering, flipGear, flipOrder)
                         if cost < successCost:
                             successCost = cost
@@ -389,6 +395,7 @@ class Reeds_Shepp:
                 successActionSet.remove(action)
 
         # convert successActionSet units back to original units (reverse the radius transform)
+        # turning actions are in degrees
         for action in successActionSet:
             action.convertValueOriginalScale(self.turningRadius)
             action.convertToDegrees()
