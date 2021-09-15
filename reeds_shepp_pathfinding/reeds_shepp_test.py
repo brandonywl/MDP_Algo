@@ -1,5 +1,6 @@
 import time
 import math
+import heapq
 import pygame
 
 from reeds_shepp_pathfinding.reeds_shepp import Reeds_Shepp
@@ -7,40 +8,31 @@ from utilities import drawing
 from Env import Env
 from map_tiles.block import Block
 
-if __name__ == "__main__":
-    # Initialize environment
-    env = Env(num_blocks=5, display=True)
+# Initialize environment
+env = Env(num_blocks=5, display=True)
+# initialise info about robot
+# WHEEL_LENGTH is 20
+fwheelbwheelDist = drawing.CAR_LENGTH
+# steeringAngle in degrees
+steeringAngle = env.STEERING_ANGLE
+turningRadius = fwheelbwheelDist/math.tan(math.radians(steeringAngle))
+# turningRadius = 25
+carSpd = env.MOVE_SPEED_PIXEL
+# send an instruction every s, dummy value here
+instructionPeriod = 1
 
-    # Get robot start pos, direction in degrees
-    robot_start_pos = tuple(env.robot.get_point().as_list(False))
-    print("Start node:", robot_start_pos)
-    # print("Robot starting position: (" + robot_start_pos[0] + ", " + robot_start_pos[1] + ", " + robot_start_pos[2] + ")")
+def checkActionSetObstacleCollision():
+    return True
 
-    # initialise info about robot
-    # WHEEL_LENGTH is 20
-    fwheelbwheelDist = drawing.CAR_LENGTH
-    # steeringAngle in degrees
-    steeringAngle = env.STEERING_ANGLE
-    turningRadius = fwheelbwheelDist/math.tan(math.radians(steeringAngle))
-    # turningRadius = 25
-    carSpd = env.MOVE_SPEED_PIXEL
-    # send an instruction every s, dummy value here
-    instructionPeriod = 1
-
-    # goals = [(goal1), (goal2), ...]
-    goals = []
+#outputs order of goals to visit using reeds shepp
+#returns sortedFoundPaths, which has the format [(cost, [(target_node_pos), [actionSet]]),..]
+def findGoalOrderReedsShepps(robot_start_pos, goals):
     # foundPaths = { cost: [(target_node_pos), [actionSet]], ...}
-    foundPaths = {}
-    # finalPath = [ [(target), [actionSet], cost], ..]
+    # foundPaths = {}
+    # foundPathsHeap = { (cost, (target_node_pos), [actionSet]), ...}
+    foundPathsHeap = []
+    # finalPath = [ ((target_node_pos), [actionSet], cost), ..]
     finalPath = []
-
-    for block in env.blocks:
-        # Get position of target, direction in degrees
-        goals.append(tuple(Block.get_target_point(block).as_list(False)))
-        # print("End node:", target_node_pos)
-
-    print("All goals: ")
-    print(goals)
 
     print("All paths sorted: \n")
     count = 1
@@ -49,18 +41,14 @@ if __name__ == "__main__":
 
             reedsShepp = Reeds_Shepp(target_node_pos, robot_start_pos, turningRadius)
             cost, actionSet = reedsShepp.run()
-            """
-            print("Cost of (" + str(target_node_pos[0]) + ", " + str(target_node_pos[1]) + ", " + str(target_node_pos[2]) + ") is: " + str(cost))
-            print("Action set of (" + str(target_node_pos[0]) + ", " + str(target_node_pos[1]) + ", " + str(target_node_pos[2]) + ") is: ")
-            for a in actionSet:
-                print("L/R/S: " + str(a.steering) + ", F/B: " + str(a.gear) + ", Value: " + str(a.value))
-            """
-            foundPaths[cost] = [target_node_pos, actionSet]
+            heapq.heappush(foundPathsHeap, (cost, target_node_pos, actionSet))
+            #foundPaths[cost] = [target_node_pos, actionSet]
 
-        # sortedFoundPaths has the format [(cost, [(target_node_pos), [actionSet]]),..]
-        sortedFoundPaths = sorted(foundPaths.items())
+        # sortedFoundPaths has the format (cost, (target_node_pos), [actionSet])
+        sortedFoundPath = heapq.heappop(foundPathsHeap)
+        #sortedFoundPaths = sorted(foundPaths.items())
         # add the path to the nearest target
-        finalPath.append([sortedFoundPaths[0][1][0], sortedFoundPaths[0][1][1], sortedFoundPaths[0][0]])
+        finalPath.append([sortedFoundPath[1], sortedFoundPath[2], sortedFoundPath[0]])
 
         print("Starting point ", count, ": ", robot_start_pos)
         print("Target ", count, ": ", finalPath[-1][0])
@@ -73,11 +61,33 @@ if __name__ == "__main__":
 
         robot_start_pos = finalPath[-1][0]
         goals.remove(robot_start_pos)
-        foundPaths.clear()
+        foundPathsHeap.clear()
 
 
-def checkActionSetObstacleCollision():
-    return True
+if __name__ == "__main__":
+
+    # Get (robot_start_x, robot_start_y, robot_start_theta (degrees))
+    robot_start_pos = tuple(env.robot.get_point().as_list(False))
+    print("Start node:", robot_start_pos)
+
+    # goals = [(goal1), (goal2), ...]
+    goals = []   
+
+    for block in env.blocks:
+        # Get (target_x, target_y, target_theta (degrees))
+        goals.append(tuple(Block.get_target_point(block).as_list(False)))
+
+    print("All goals: ")
+    print(goals)
+
+    sortedFoundPaths = findGoalOrderReedsShepps(robot_start_pos, goals)
+
+    
+
+
+
+
+
 
 """
 a_star = Hybrid_AStar(robot_start_pos, target_node_pos, env.blocks)
