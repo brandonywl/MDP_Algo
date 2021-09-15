@@ -76,17 +76,19 @@ if __name__ == "__main__":
         foundPaths.clear()
 
 
+def checkActionSetObstacleCollision():
+    return True
 
-        """
-        a_star = Hybrid_AStar(robot_start_pos, target_node_pos, env.blocks)
-        output = a_star.run()
-        if env.planned_path is None:
-            env.planned_path = output[0]
-        else:
-            env.planned_path.extend(output[0])
+"""
+a_star = Hybrid_AStar(robot_start_pos, target_node_pos, env.blocks)
+output = a_star.run()
+if env.planned_path is None:
+    env.planned_path = output[0]
+else:
+    env.planned_path.extend(output[0])
 
-        robot_start_pos = output[0][-1][1]
-        """
+robot_start_pos = output[0][-1][1]
+"""
 
 """
 # Generate blocks for the map
