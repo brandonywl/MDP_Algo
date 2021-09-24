@@ -1,4 +1,5 @@
 import math
+from utilities import utilities
 
 #an action that can be taken in a Reeds-Shepp path
 #these include moving forward/backward in a straight line and turning left/right in forwards/backwards direction
@@ -7,12 +8,15 @@ class Action:
     # steering: 1 for left, -1 for right, 0 for straight
     # gear: 1 for forward, -1 for backward
     # value: if steering straight, this is the distance, else this is the angle of the arc in radians
-    def __init__(self, steering, gear, value):
+    def __init__(self, steering, gear, value, startPos = None, endPos = None):
         self.steering = steering
         self.value = value
         self.gear = gear
-        self.isRadians = True
+        #self.isRadians = True
         self.streamlineTurning()
+        self.startPos = startPos
+        self.endPos = endPos
+        self.arcCenter = None
 
     # if action is a turn, checks if value > pi, if so, reverse direction and turn 2*pi - value
     def streamlineTurning(self):
@@ -25,21 +29,58 @@ class Action:
         if self.steering == 0:
             self.value *= turningRadius
 
+    """
     # convert value from radians to degrees for better readability
     def convertToDegrees(self):
         if self.steering != 0 and self.isRadians:
             self.value = math.degrees(self.value)
+            if self.startPos:
+                self.startPos = (self.startPos[0], self.startPos[1], math.degrees(self.startPos[2]))
+                self.endPos = (self.startPos[0], self.startPos[1], math.degrees(self.endPos[2]))
             self.isRadians = False
 
     # convert value from degrees to radians
     def convertToRadians(self):
         if self.steering != 0 and not self.isRadians:
             self.value = math.radians(self.value)
+            if self.startPos:
+                self.startPos = (self.startPos[0], self.startPos[1], math.radians(self.startPos[2]))
+                self.endPos = (self.startPos[0], self.startPos[1], math.radians(self.endPos[2]))
             self.isRadians = True
+    """
+
+    # start and end pos is in (x, y, theta), theta in radians
+    # calculates start, end-coordinate, also arc center coordinates if applicable
+    # call this AFTER units have been converted out of reeds-shepp format!!!!
+    def setStartAndEndCoord(self, startPos, turningRadius = 1):
+        startPosAngle = utilities.wrapAngle(startPos[2])
+        if self.steering == 0:
+            endPos = (self.gear*self.value*math.cos(startPosAngle) + startPos[0], self.gear*self.value*math.sin(startPosAngle) + startPos[1], startPosAngle)
+        else:
+            arcCenterX = startPos[0] - turningRadius * math.cos(startPosAngle - (math.pi / 2) * self.steering)
+            arcCenterY = startPos[1] - turningRadius * math.sin(startPosAngle - (math.pi / 2) * self.steering)
+            angleChange = self.value
+            """
+            if not self.isRadians:
+                angleChange = math.radians(self.value)
+            else:
+                angleChange = self.value
+            """
+
+            endAngle = utilities.wrapAngle(startPosAngle + angleChange*self.steering*self.gear)
+            endPos = (arcCenterX + turningRadius*math.cos(endAngle - (math.pi/2)*self.steering), arcCenterY + turningRadius*math.sin(endAngle - (math.pi/2)*self.steering), endAngle)
+            self.arcCenter = (arcCenterX, arcCenterY)
+        """
+        if not self.isRadians:
+            startPos = (startPos[0], startPos[1], math.degrees(startPos[2]))
+            endPos = (endPos[0], endPos[1], math.degrees(endPos[2]))
+        """
+        self.startPos = startPos
+        self.endPos = endPos
 
     #convert action to list of discrete instructions (velocity, steeringAngle) to be sent every instructionPeriod
     #ASSUME that output positive steering angle is left and negative steering angle is right, CHECK LATER
-    #steeringAngle input is in degrees
+    #steeringAngle input is in radians
     #positive velocity is move forward, negative velocity is move backward
     def convertToDiscreteInstruction(self, instructionPeriod, velocity, steeringAngle, turningRadius):
         instructionList = []
@@ -49,10 +90,13 @@ class Action:
             for i in range(instructionNumber):
                 instructionList.append((velocity*self.gear, 0))
         else:
+            """
             if self.isRadians == False:
                 actionTime = math.radians(self.value)*turningRadius/velocity
             else:
                 actionTime = self.value * turningRadius / velocity
+            """
+            actionTime = self.value * turningRadius / velocity
             instructionNumber = round(actionTime / instructionPeriod)
             for i in range(instructionNumber):
                 instructionList.append((velocity*self.gear, steeringAngle*self.steering))
@@ -69,28 +113,6 @@ class Reeds_Shepp:
         self.turningRadius = turningRadius
 
     ###UTILITY FUNCTIONS
-
-    # checks if value is between lower and upper (inclusive of)
-    def isBetween(self, value, lower, upper):
-        if value >= lower and value <= upper:
-            return True
-        else:
-            return False
-
-    # converts angle to be between 0 and 2pi
-    def wrapAngle(self, value):
-        while value > 2 * math.pi:
-            value -= 2 * math.pi
-        while value < 0:
-            value += 2 * math.pi
-        return value
-
-    # returns polar coordinates (r, theta) of the point (x, y), theta in radians
-    def getPolar(self, x, y):
-        r = math.sqrt(x ** 2 + y ** 2)
-        theta = math.atan2(y, x)
-        return r, theta
-
     # target converted to coordinates relative to source for Reeds-Shepp calculations
     def relativeCoordinateConversion(self, target, source):
         #\print("Original target coordinates: (" + str(target[0]) + ", " + str(target[1]) + ", " + str(target[2]) + ")")
@@ -98,8 +120,8 @@ class Reeds_Shepp:
         x1 = target[0] - source[0]
         y1 = target[1] - source[1]
         theta = target[2] - source[2]
-        x = x1 * math.cos(math.radians(target[2])) - y1 * math.sin(math.radians(target[2]))
-        y = x1 * math.sin(math.radians(target[2])) + y1 * math.cos(math.radians(target[2]))
+        x = x1 * math.cos(target[2]) - y1 * math.sin(target[2])
+        y = x1 * math.sin(target[2]) + y1 * math.cos(target[2])
         #print("After converting to relative coordinates, target is now: (" + str(x) + ", " + str(y) + ", " + str(
         #   theta) + ")")
         return (x, y, theta)
@@ -118,11 +140,10 @@ class Reeds_Shepp:
 
     # transforms coordinates of target for calculations with flipped order
     def flipOrderTransform(self, target):
-        x = target[0] * math.cos(math.radians(target[2])) + target[1] * math.sin(math.radians(target[2]))
-        y = target[0] * math.sin(math.radians(target[2])) - target[1] * math.cos(math.radians(target[2]))
+        x = target[0] * math.cos(target[2]) + target[1] * math.sin(target[2])
+        y = target[0] * math.sin(target[2]) - target[1] * math.cos(target[2])
         return (x, y, target[2])
     ###
-
 
     ###REEDS-SHEPP EQUATIONS
     # Each formula assumes the car moves from (0,0,0) to (x,y,theta), with theta in radians
@@ -137,11 +158,11 @@ class Reeds_Shepp:
     def LfSfLf(self, target, flipSteering, flipGear, flipOrder):
         actionSet = []
 
-        x = target[0] - math.sin(math.radians(target[2]))
-        y = target[1] - 1 + math.cos(math.radians(target[2]))
-        u, t = self.getPolar(x, y)
-        v = self.wrapAngle(target[2] - t)
-        # if self.isBetween(t, 0, math.pi/2) and self.isBetween(v, 0, math.pi/2): #if cannot find, relax range to [0,pi]
+        x = target[0] - math.sin(target[2])
+        y = target[1] - 1 + math.cos(target[2])
+        u, t = utilities.getPolar(x, y)
+        v = utilities.wrapAngle(target[2] - t)
+        # if utilities.isBetween(t, 0, math.pi/2) and utilities.isBetween(v, 0, math.pi/2): #if cannot find, relax range to [0,pi]
 
         actionSet.append(Action((-1) ** flipSteering, (-1) ** flipGear, t))
         actionSet.append(Action(0, (-1) ** flipGear, u))
@@ -156,14 +177,14 @@ class Reeds_Shepp:
     def LfSfRf(self, target, flipSteering, flipGear, flipOrder):
         actionSet = []
 
-        x = target[0] + math.sin(math.radians(target[2]))
-        y = target[1] - 1 - math.cos(math.radians(target[2]))
-        u1, t1 = self.getPolar(x, y)
+        x = target[0] + math.sin(target[2])
+        y = target[1] - 1 - math.cos(target[2])
+        u1, t1 = utilities.getPolar(x, y)
         if u1 ** 2 >= 4:
             u = math.sqrt(u1 ** 2 - 4)
-            t = self.wrapAngle(t1 + math.atan2(2, u))
-            v = self.wrapAngle(t - target[2])
-            # if self.isBetween(t, 0, math.pi/2) and self.isBetween(v, 0, math.pi/2): #if cannot find, relax range to [0,pi]
+            t = utilities.wrapAngle(t1 + math.atan2(2, u))
+            v = utilities.wrapAngle(t - target[2])
+            # if utilities.isBetween(t, 0, math.pi/2) and utilities.isBetween(v, 0, math.pi/2): #if cannot find, relax range to [0,pi]
 
             actionSet.append(Action((-1) ** flipSteering, (-1) ** flipGear, t))
             actionSet.append(Action(0, (-1) ** flipGear, u))
@@ -179,15 +200,15 @@ class Reeds_Shepp:
     def LfRbLf(self, target, flipSteering, flipGear, flipOrder):
         actionSet = []
 
-        x = target[0] - math.sin(math.radians(target[2]))
-        y = target[1] - 1 + math.cos(math.radians(target[2]))
-        u1, t1 = self.getPolar(x, y)
+        x = target[0] - math.sin(target[2])
+        y = target[1] - 1 + math.cos(target[2])
+        u1, t1 = utilities.getPolar(x, y)
         if u1 <= 4:
             a = math.acos(u1 / 4)
-            t = self.wrapAngle(t1 + math.pi / 2 + a)
-            u = self.wrapAngle(math.pi - 2 * a)
-            v = self.wrapAngle(math.radians(target[2]) - t - u)
-            # if self.isBetween(t, 0, math.pi) and self.isBetween(u, 0, math.pi) and self.isBetween(v, 0, math.pi):
+            t = utilities.wrapAngle(t1 + math.pi / 2 + a)
+            u = utilities.wrapAngle(math.pi - 2 * a)
+            v = utilities.wrapAngle(target[2] - t - u)
+            # if utilities.isBetween(t, 0, math.pi) and utilities.isBetween(u, 0, math.pi) and utilities.isBetween(v, 0, math.pi):
 
             actionSet.append(Action((-1) ** flipSteering, (-1) ** flipGear, t))
             actionSet.append(Action(-(-1) ** flipSteering, -(-1) ** flipGear, u))
@@ -203,15 +224,15 @@ class Reeds_Shepp:
     def LfRbLb(self, target, flipSteering, flipGear, flipOrder):
         actionSet = []
 
-        x = target[0] - math.sin(math.radians(target[2]))
-        y = target[1] - 1 + math.cos(math.radians(target[2]))
-        u1, t1 = self.getPolar(x, y)
+        x = target[0] - math.sin(target[2])
+        y = target[1] - 1 + math.cos(target[2])
+        u1, t1 = utilities.getPolar(x, y)
         if u1 <= 4:
             a = math.acos(u1 / 4)
-            t = self.wrapAngle(t1 + math.pi / 2 + a)
-            u = self.wrapAngle(math.pi - 2 * a)
-            v = self.wrapAngle(t + u - math.radians(target[2]))
-            # if self.isBetween(t, 0, u) and self.isBetween(u, 0, math.pi/2) and self.isBetween(v, 0, u):
+            t = utilities.wrapAngle(t1 + math.pi / 2 + a)
+            u = utilities.wrapAngle(math.pi - 2 * a)
+            v = utilities.wrapAngle(t + u - target[2])
+            # if utilities.isBetween(t, 0, u) and utilities.isBetween(u, 0, math.pi/2) and utilities.isBetween(v, 0, u):
 
             actionSet.append(Action((-1) ** flipSteering, (-1) ** flipGear, t))
             actionSet.append(Action(-(-1) ** flipSteering, -(-1) ** flipGear, u))
@@ -227,21 +248,21 @@ class Reeds_Shepp:
     def LfRfLbRb(self, target, flipSteering, flipGear, flipOrder):
         actionSet = []
 
-        x = target[0] + math.sin(math.radians(target[2]))
-        y = target[1] - 1 - math.cos(math.radians(target[2]))
-        u1, t1 = self.getPolar(x, y)
+        x = target[0] + math.sin(target[2])
+        y = target[1] - 1 - math.cos(target[2])
+        u1, t1 = utilities.getPolar(x, y)
         if u1 <= 4:
             if u1 <= 2:
                 a = math.acos((u1 + 2) / 4)
-                t = self.wrapAngle(t1 + math.pi / 2 + a)
-                u = self.wrapAngle(a)
-                v = self.wrapAngle(math.radians(target[2]) - t + 2 * u)
+                t = utilities.wrapAngle(t1 + math.pi / 2 + a)
+                u = utilities.wrapAngle(a)
+                v = utilities.wrapAngle(target[2] - t + 2 * u)
             else:
                 a = math.acos((u1 - 2) / 4)
-                t = self.wrapAngle(t1 + math.pi / 2 - a)
-                u = self.wrapAngle(math.pi - a)
-                v = self.wrapAngle(math.radians(target[2]) - t + 2 * u)
-            # if self.isBetween(t, 0, u) and self.isBetween(u, 0, math.pi/2) and self.isBetween(v, 0, u):
+                t = utilities.wrapAngle(t1 + math.pi / 2 - a)
+                u = utilities.wrapAngle(math.pi - a)
+                v = utilities.wrapAngle(target[2] - t + 2 * u)
+            # if utilities.isBetween(t, 0, u) and utilities.isBetween(u, 0, math.pi/2) and utilities.isBetween(v, 0, u):
 
             actionSet.append(Action((-1) ** flipSteering, (-1) ** flipGear, t))
             actionSet.append(Action(-(-1) ** flipSteering, (-1) ** flipGear, u))
@@ -258,16 +279,16 @@ class Reeds_Shepp:
     def LfRbLbRf(self, target, flipSteering, flipGear, flipOrder):
         actionSet = []
 
-        x = target[0] + math.sin(math.radians(target[2]))
-        y = target[1] - 1 - math.cos(math.radians(target[2]))
-        u1, t1 = self.getPolar(x, y)
+        x = target[0] + math.sin(target[2])
+        y = target[1] - 1 - math.cos(target[2])
+        u1, t1 = utilities.getPolar(x, y)
         u2 = (20 - u1 ** 2) / 16
-        if u1 <= 6 and self.isBetween(u2, 0, 1):
+        if u1 <= 6 and utilities.isBetween(u2, 0, 1):
             u = math.acos(u2)
             a = math.asin(2 * math.sin(u) / u1)
-            t = self.wrapAngle(t1 + math.pi / 2 + a)
-            v = self.wrapAngle(t - math.radians(target[2]))
-            # if self.isBetween(t, 0, u) and self.isBetween(u, 0, math.pi/2) and self.isBetween(v, 0, u):
+            t = utilities.wrapAngle(t1 + math.pi / 2 + a)
+            v = utilities.wrapAngle(t - target[2])
+            # if utilities.isBetween(t, 0, u) and utilities.isBetween(u, 0, math.pi/2) and utilities.isBetween(v, 0, u):
 
             actionSet.append(Action((-1) ** flipSteering, (-1) ** flipGear, t))
             actionSet.append(Action(-(-1) ** flipSteering, -(-1) ** flipGear, u))
@@ -284,16 +305,16 @@ class Reeds_Shepp:
     def LfRbSbLb(self, target, flipSteering, flipGear, flipOrder):
         actionSet = []
 
-        x = target[0] - math.sin(math.radians(target[2]))
-        y = target[1] - 1 + math.cos(math.radians(target[2]))
-        u1, t1 = self.getPolar(-y, x)
+        x = target[0] - math.sin(target[2])
+        y = target[1] - 1 + math.cos(target[2])
+        u1, t1 = utilities.getPolar(-y, x)
         if u1 >= 2:
             u = math.sqrt(u1 ** 2 - 4) - 2
             if (u >= 0):
                 a = math.atan2(2, u + 2)
-                t = self.wrapAngle(t1 + math.pi / 2 + a)
-                v = self.wrapAngle(t + math.pi / 2 - math.radians(target[2]))
-                # if self.isBetween(t, 0, math.pi/2) and self.isBetween(v, 0, math.pi/2):
+                t = utilities.wrapAngle(t1 + math.pi / 2 + a)
+                v = utilities.wrapAngle(t + math.pi / 2 - target[2])
+                # if utilities.isBetween(t, 0, math.pi/2) and utilities.isBetween(v, 0, math.pi/2):
 
                 actionSet.append(Action((-1) ** flipSteering, (-1) ** flipGear, t))
                 actionSet.append(Action(-(-1) ** flipSteering, -(-1) ** flipGear, math.pi / 2))
@@ -311,14 +332,14 @@ class Reeds_Shepp:
     def LfRbSbRb(self, target, flipSteering, flipGear, flipOrder):
         actionSet = []
 
-        x = target[0] + math.sin(math.radians(target[2]))
-        y = target[1] - 1 - math.cos(math.radians(target[2]))
-        u1, t1 = self.getPolar(y, x)
+        x = target[0] + math.sin(target[2])
+        y = target[1] - 1 - math.cos(target[2])
+        u1, t1 = utilities.getPolar(y, x)
         if u1 >= 2:
-            t = self.wrapAngle(t1 + math.pi / 2)
+            t = utilities.wrapAngle(t1 + math.pi / 2)
             u = u1 - 2
-            v = self.wrapAngle(math.radians(target[2]) - math.pi / 2 - t)
-            # if self.isBetween(t, 0, math.pi/2) and self.isBetween(v, 0, math.pi/2):
+            v = utilities.wrapAngle(target[2] - math.pi / 2 - t)
+            # if utilities.isBetween(t, 0, math.pi/2) and utilities.isBetween(v, 0, math.pi/2):
 
             actionSet.append(Action((-1) ** flipSteering, (-1) ** flipGear, t))
             actionSet.append(Action(-(-1) ** flipSteering, -(-1) ** flipGear, math.pi / 2))
@@ -335,16 +356,16 @@ class Reeds_Shepp:
     def LfRbSbLbRf(self, target, flipSteering, flipGear, flipOrder):
         actionSet = []
 
-        x = target[0] + math.sin(math.radians(target[2]))
-        y = target[1] - 1 - math.cos(math.radians(target[2]))
-        u1, t1 = self.getPolar(x, y)
+        x = target[0] + math.sin(target[2])
+        y = target[1] - 1 - math.cos(target[2])
+        u1, t1 = utilities.getPolar(x, y)
         if u1 >= 4:
             u = math.sqrt(u1 ** 2 - 4) - 4
             if (u >= 0):
                 a = math.atan2(2, u + 4)
-                t = self.wrapAngle(t1 + math.pi / 2 + a)
-                v = self.wrapAngle(t - math.radians(target[2]))
-                # if self.isBetween(t, 0, math.pi/2) and self.isBetween(v, 0, math.pi/2):
+                t = utilities.wrapAngle(t1 + math.pi / 2 + a)
+                v = utilities.wrapAngle(t - target[2])
+                # if utilities.isBetween(t, 0, math.pi/2) and utilities.isBetween(v, 0, math.pi/2):
 
                 actionSet.append(Action((-1) ** flipSteering, (-1) ** flipGear, t))
                 actionSet.append(Action(-(-1) ** flipSteering, -(-1) ** flipGear, math.pi / 2))
@@ -395,10 +416,9 @@ class Reeds_Shepp:
                 successActionSet.remove(action)
 
         # convert successActionSet units back to original units (reverse the radius transform)
-        # turning actions are in degrees
+        # turning actions are in radians
         for action in successActionSet:
             action.convertValueOriginalScale(self.turningRadius)
-            action.convertToDegrees()
 
         return successCost, successActionSet
 

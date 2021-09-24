@@ -1,5 +1,6 @@
 import numpy as np
 import pygame
+from utilities import utilities
 
 RED = (200, 0, 0)
 BLUE = (0, 0, 255)
@@ -155,3 +156,29 @@ def draw_path(window, movements):
     continuous_path = list(zip(*movements))[1]
     for movement in continuous_path:
         pygame.draw.circle(window, WHITE, movement[:2], 2)
+
+#draws a path given an action
+#only call after endpos and startpos of action has been assigned
+def draw_path_action(window, action, turningRadius = 1):
+    if action.steering == 0:
+        pygame.draw.line(window, WHITE, (action.startPos[0], -action.startPos[1]), (action.endPos[0], -action.endPos[1]), 2)
+    else:
+        startAngle = utilities.wrapAngle(action.startPos[2] - (np.pi/2)*action.steering)
+        endAngle = utilities.wrapAngle(action.endPos[2] - (np.pi/2)*action.steering)
+        """
+        if not action.isRadians:
+            startAngle = np.deg2rad(startAngle)
+            endAngle = np.deg2rad(endAngle)
+        """
+        if np.abs(startAngle - endAngle) > np.pi:
+            if startAngle < endAngle:
+                startAngle += 2*np.pi
+            else:
+                endAngle += 2*np.pi
+        if endAngle < startAngle:
+            temp = endAngle
+            endAngle = startAngle
+            startAngle = temp
+        pygame.draw.arc(window, WHITE, pygame.Rect(action.arcCenter[0]-turningRadius, -action.arcCenter[1]-turningRadius, 2*turningRadius, 2*turningRadius), startAngle, endAngle, 2)
+
+

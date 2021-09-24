@@ -1,4 +1,5 @@
 import math
+from utilities import utilities
 
 from movement_models import collision_detection
 from reeds_shepp_pathfinding import reeds_shepp
@@ -11,8 +12,8 @@ def angleInRange(range, angle):
     halfRange = (range[1] - range[0])/2
     rangeMidPoint = range[1] - halfRange
     #ensure both values are between 0 and 2pi
-    rangeMidPoint = reeds_shepp.wrapAngle(rangeMidPoint)
-    angle = reeds_shepp.wrapAngle(angle)
+    rangeMidPoint = utilities.wrapAngle(rangeMidPoint)
+    angle = utilities.wrapAngle(angle)
     if abs(angle - rangeMidPoint) <= halfRange:
         return 0
     elif angle > rangeMidPoint:
@@ -21,7 +22,7 @@ def angleInRange(range, angle):
         return -1
 
 #detects collision between Action and Block
-#assumes start of action is (x, y, theta), theta in degrees
+#assumes start of action is (x, y, theta), theta in radians
 def collisionDetectionStraightAction(start, action, obstacles, turningRadius = 0):
     #assume that obstacles are square
     obstacleWidth = obstacles[0].cell_width
@@ -37,7 +38,7 @@ def collisionDetectionStraightAction(start, action, obstacles, turningRadius = 0
 
     startX = start[0]
     startY = start[1]
-    theta = math.radians(start[2])
+    theta = start[2]
 
     #straight motion
     if action.steering == 0:
