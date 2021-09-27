@@ -45,7 +45,7 @@ def timeMeasure(n):
 
 if __name__ == "__main__":
     """
-    iterations = 1
+    iterations = 100
     aveTime = timeMeasure(iterations)
     print("Average time taken for " + str(iterations) + " times: " + str(aveTime) + "s")
     """
