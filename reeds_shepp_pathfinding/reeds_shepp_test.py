@@ -4,6 +4,7 @@ import heapq
 import pygame
 
 from reeds_shepp_pathfinding.reeds_shepp import Reeds_Shepp
+from reeds_shepp_pathfinding import reeds_shepp_collision_detection
 from utilities import drawing, utilities
 from Env import Env
 from map_tiles.block import Block
@@ -57,7 +58,8 @@ def reedsSheppTestTurningMotion(robot_start_pos):
         startPos = a.endPos
     print()
 
-def checkActionSetObstacleCollision():
+def checkActionSetObstacleCollision(finalPath, obstacles):
+
     return True
 
 #outputs order of goals to visit using reeds shepp

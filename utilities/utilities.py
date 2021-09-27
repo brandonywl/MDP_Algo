@@ -11,6 +11,9 @@ def cm_to_pixel(cm, map_shape=800, physical_shape=200):
 
     return round((map_shape / physical_shape) * cm)
 
+def pixel_to_cm(pixel, map_shape=800, physical_shape=200):
+    return round((physical_shape / map_shape) * pixel)
+
 # checks if value is between lower and upper (inclusive of)
 def isBetween(value, lower, upper):
     if value >= lower and value <= upper:
@@ -26,6 +29,14 @@ def wrapAngle(value):
         value += 2 * math.pi
     return value
 
+# converts angle to be between -180 and 180
+def wrapAnglePI(value):
+    while value > 180:
+        value -= 360
+    while value < -180:
+        value += 360
+    return value
+
 # returns polar coordinates (r, theta) of the point (x, y), theta in radians
 def getPolar(x, y):
     r = math.sqrt(x ** 2 + y ** 2)
@@ -38,6 +49,41 @@ def getPolar(x, y):
 def convertCoordFromPyCharm(pycharmCoord):
     newCoord = (pycharmCoord[0], -pycharmCoord[1], pycharmCoord[2])
     return newCoord
+
+#convert discrete instructions to hardware
+#instructionSet in the form [(velocity, steeringAngle),...], assuming steeringAngle is between 180 and -180
+def discreteInstructionToHardware(self, instructionSet, interval, turningRadius):
+    #W is straight
+    #A is left
+    #D is right
+    #HWInstructions in the form [('W/A/D', angle/distance),...], angle in degree, distance in irl values
+    HWInstructions = []
+    totalValue = 0
+    currentSteeringAngle = instructionSet[0][1]
+    for instruction in instructionSet:
+        nextSteeringAngle = instruction[1]
+        if nextSteeringAngle != currentSteeringAngle:
+            if currentSteeringAngle == 0:
+                action = 'W'
+            elif currentSteeringAngle > 0:
+                action = 'A'
+            else:
+                action = 'D'
+            HWInstructions.append((action, totalValue))
+            totalValue = 0
+        currentSteeringAngle = nextSteeringAngle
+        #straight motion
+        if currentSteeringAngle == 0:
+            #update total distance
+            totalValue += instruction[0] * interval
+        #turning motion
+        else:
+            #update total angle
+            totalValue += (instruction[0] * interval) / turningRadius
+    # convert pixel to irl spd
+    for i in HWInstructions:
+        i = (i[0], pixel_to_cm(i[1]))
+    return HWInstructions
 
 if __name__ == "__main__":
     print(cm_to_pixel(50))

@@ -23,7 +23,7 @@ def angleInRange(range, angle):
 
 #detects collision between Action and Block
 #assumes start of action is (x, y, theta), theta in radians
-def collisionDetectionStraightAction(start, action, obstacles, turningRadius = 0):
+def collisionDetectionActions(start, action, obstacles, turningRadius = 1):
     #assume that obstacles are square
     obstacleWidth = obstacles[0].cell_width
     obstaclesCoord = []
