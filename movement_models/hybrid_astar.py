@@ -6,6 +6,7 @@ from map_tiles.point import Point
 from movement_models import bicycle_movement_model, collision_detection
 from movement_models.bicycle_movement_model import backaxel_move
 from utilities import drawing
+from utilities import utilities
 
 
 class Hybrid_AStar:
@@ -19,21 +20,22 @@ class Hybrid_AStar:
 
         self.min_x = -40
         self.max_x = 840
-        #self.max_x = 600
+        # self.max_x = 600
         self.min_y = -40
         self.max_y = 840
-        #self.max_y = 600
+        # self.max_y = 600
 
-        #self.steering_angles = [-30, 0, 30]
-        self.steering_angles = [-40, 0, 40]
-        self.add_steering_costs = [0.1, 0, 0.1]
-        #self.add_steering_costs = [2, 0, 2]
+        self.steering_angles = [-30, 0, 30]
+        # self.steering_angles = [-40, 0, 40]
+        # self.add_steering_costs = [0.1, 0, 0.1]
+        self.add_steering_costs = [1, 0, 1]
 
-        #self.velocity = [-30, 30]
-        #self.velocity = [-10, 10]
-        self.velocity = [-40, 40]
+        # self.velocity = [-20, 20]
+        spd = self.round(utilities.cm_to_pixel(10), 0, 1)
+        self.velocity = [-spd, spd]
+        # self.velocity = [-40, 40]
         self.add_velocity_costs = [1, 0]
-        #self.add_velocity_costs = [2, 0]
+        # self.add_velocity_costs = [2, 0]
 
         self.obstacles = obstacles
 
@@ -48,9 +50,11 @@ class Hybrid_AStar:
     def angle_diff(self, position, target):
         return abs(position[2] - target[2])
 
-    def round(self, x, prec=0, base=5):
-    #def round(self, x, prec=2, base=1):
-    #def round(self, x, prec=2, base=15):
+    # def round(self, x, prec=0, base=10):
+    # def round(self, x, prec=2, base=1):
+    # def round(self, x, prec=2, base=15):
+
+    def round(self, x, prec = 1, base = 20):
         return round(base * round(float(x) / base), prec)
 
     def run(self):
@@ -62,13 +66,13 @@ class Hybrid_AStar:
         Elements in open_heap have the following format:
         (cost, node_discrete)
         """
-        open_heap = [] 
+        open_heap = []
 
         """
         Elements in open_dict have the following format:
         node_discrete: (cost, node_continuous, (parent_discrete, parent_continuous), (velocity, steering_angle))
         """
-        open_dict = {} 
+        open_dict = {}
 
         """
         Elements in visited_dict have the following format:
@@ -103,9 +107,9 @@ class Hybrid_AStar:
             # diff = (diff + 180) % 360 - 180
             # diff = 0
 
-            #if self.euc_dist(chosen_d_node, end) < 0.5:
-            #if self.euc_dist(chosen_d_node, end) < 20:
-            if self.euc_dist(chosen_d_node, end) < 20 and self.angle_diff(chosen_d_node, end) < 20:
+            # if self.euc_dist(chosen_d_node, end) < 0.5:
+            # if self.euc_dist(chosen_d_node, end) < 20:
+            if self.euc_dist(chosen_d_node, end) < 20 and self.angle_diff(chosen_d_node, end) < 30:
                 print("We are done???")
                 print("count: ", count)
                 # print("visited_dict: ", visited_dict)
@@ -140,7 +144,7 @@ class Hybrid_AStar:
                     steering_angle = self.steering_angles[i]
                     velocity = self.velocity[j]
 
-                    cost_to_neighbour_from_start = chosen_node_total_cost - self.euc_dist(chosen_d_node, end) 
+                    cost_to_neighbour_from_start = chosen_node_total_cost - self.euc_dist(chosen_d_node, end)
 
                     # continuous coordinates
                     # neighbour_x_cts = chosen_c_node[0] + (velocity * math.cos(math.radians(chosen_c_node[2])))
@@ -160,17 +164,17 @@ class Hybrid_AStar:
                     # discrete coordinates
                     neighbour_x_d = self.round(neighbour_x_cts)
                     neighbour_y_d = self.round(neighbour_y_cts)
-                    neighbour_theta_d = self.round(neighbour_theta_cts)
+                    neighbour_theta_d = self.round(neighbour_theta_cts, 2, 0.5)
 
-                    neighbour = ((neighbour_x_d, neighbour_y_d, neighbour_theta_d), 
-                                    (neighbour_x_cts, neighbour_y_cts, neighbour_theta_cts))
-
+                    neighbour = ((neighbour_x_d, neighbour_y_d, neighbour_theta_d),
+                                 (neighbour_x_cts, neighbour_y_cts, neighbour_theta_cts))
 
                     if neighbour_x_d >= self.min_x and neighbour_x_d < self.max_x \
-                        and neighbour_y_d >= self.min_y and neighbour_y_d < self.max_y:
+                            and neighbour_y_d >= self.min_y and neighbour_y_d < self.max_y:
 
                         heuristic_cost = self.euc_dist((neighbour_x_d, neighbour_y_d, neighbour_theta_d), end)
-                        cost_to_neighbour_from_start += abs(velocity) + self.add_steering_costs[i] + self.add_velocity_costs[j]
+                        cost_to_neighbour_from_start += abs(velocity) + self.add_steering_costs[i] + \
+                                                        self.add_velocity_costs[j]
                         total_cost = heuristic_cost + cost_to_neighbour_from_start
 
                         skip = 0
@@ -184,11 +188,13 @@ class Hybrid_AStar:
 
                         if skip == 0:
                             heapq.heappush(open_heap, (total_cost, neighbour[0]))
-                            open_dict[neighbour[0]] = (total_cost, neighbour[1], (chosen_d_node, chosen_c_node), (velocity, steering_angle))
+                            open_dict[neighbour[0]] = (
+                            total_cost, neighbour[1], (chosen_d_node, chosen_c_node), (velocity, steering_angle))
 
         print("count: ", count)
         print("Found nothing???")
         return None
+
 
 if __name__ == "__main__":
     hybrid_astar = Hybrid_AStar()
@@ -200,11 +206,3 @@ if __name__ == "__main__":
     plt.plot(x, y)
     plt.grid()
     plt.show()
-
-
-
-
-
-
-
-

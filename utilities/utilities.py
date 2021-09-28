@@ -52,7 +52,7 @@ def convertCoordFromPyCharm(pycharmCoord):
 
 #convert discrete instructions to hardware
 #instructionSet in the form [(velocity, steeringAngle),...], assuming steeringAngle is between 180 and -180
-def discreteInstructionToHardware(self, instructionSet, interval, turningRadius):
+def discreteInstructionToHardware(instructionSet, turningRadius, interval = 1):
     #W is straight
     #A is left
     #D is right
@@ -60,7 +60,8 @@ def discreteInstructionToHardware(self, instructionSet, interval, turningRadius)
     HWInstructions = []
     totalValue = 0
     currentSteeringAngle = instructionSet[0][1]
-    for instruction in instructionSet:
+    for i in range(len(instructionSet)):
+        instruction = instructionSet[i]
         nextSteeringAngle = instruction[1]
         if nextSteeringAngle != currentSteeringAngle:
             if currentSteeringAngle == 0:
@@ -75,14 +76,19 @@ def discreteInstructionToHardware(self, instructionSet, interval, turningRadius)
         #straight motion
         if currentSteeringAngle == 0:
             #update total distance
-            totalValue += instruction[0] * interval
+            totalValue += pixel_to_cm(instruction[0] * interval)
         #turning motion
         else:
             #update total angle
-            totalValue += (instruction[0] * interval) / turningRadius
-    # convert pixel to irl spd
-    for i in HWInstructions:
-        i = (i[0], pixel_to_cm(i[1]))
+            totalValue += instruction[0] * interval
+        if i == (len(instructionSet) - 1): #current element is last element
+            if currentSteeringAngle == 0:
+                action = 'W'
+            elif currentSteeringAngle > 0:
+                action = 'A'
+            else:
+                action = 'D'
+            HWInstructions.append((action, totalValue))
     return HWInstructions
 
 if __name__ == "__main__":

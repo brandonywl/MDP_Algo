@@ -1,56 +1,14 @@
 import time
-
+import math
 import pygame
 
 from Env import Env
 from map_tiles.block import Block
 from movement_models.hybrid_astar import Hybrid_AStar
 from utilities import drawing
+from utilities import utilities
 
-def timeMeasure(n):
-    total_time = 0
-    start_time = 0
-    end_time = 0
-    for i in range(n):
-        start_time = time.time()
-
-        # Initialize environment
-        env = Env(num_blocks=5, display=True)
-        # Get robot start pos, target_node start pos
-        robot_start_pos = tuple(env.robot.get_point().as_list(False))
-
-        count = 1
-
-        for block in env.blocks:
-            target_node_pos = tuple(Block.get_target_point(block).as_list(False))
-            print("Block ", count)
-            print("Start node:", robot_start_pos)
-            print("End node:", target_node_pos)
-
-            a_star = Hybrid_AStar(robot_start_pos, target_node_pos, env.blocks)
-            output = a_star.run()
-            if env.planned_path is None:
-                env.planned_path = output[0]
-            else:
-                env.planned_path.extend(output[0])
-
-            robot_start_pos = output[0][-1][1]
-            count += 1
-
-        end_time = time.time() - start_time
-        total_time += end_time
-        print("Iteration " + str(i+1) + " done")
-
-    return total_time/n
-
-if __name__ == "__main__":
-    """
-    iterations = 100
-    aveTime = timeMeasure(iterations)
-    print("Average time taken for " + str(iterations) + " times: " + str(aveTime) + "s")
-    """
-    # Initialize environment
-    env = Env(num_blocks=5, display=True)
+def runAStar(env):
     # Get robot start pos, target_node start pos
     # robot_start_pos = tuple(env.robot.get_point().as_list(False))
     # target_node_pos = tuple(Block.get_target_point(env.blocks[0]).as_list(False))
@@ -58,6 +16,8 @@ if __name__ == "__main__":
 
     count = 1
 
+    final_state_list = []
+    indiv_state_list = []
     for block in env.blocks:
         # robot_start_pos = tuple(env.robot.get_point().as_list(False))
         target_node_pos = tuple(Block.get_target_point(block).as_list(False))
@@ -67,17 +27,73 @@ if __name__ == "__main__":
 
         a_star = Hybrid_AStar(robot_start_pos, target_node_pos, env.blocks)
         output = a_star.run()
+        if output is None:
+            return env, None
         if env.planned_path is None:
             env.planned_path = output[0]
         else:
             env.planned_path.extend(output[0])
 
+        for instruction in output[1]:
+            indiv_state_list.append(instruction)
+
+        final_state_list.append(indiv_state_list)
+        indiv_state_list = []
         robot_start_pos = output[0][-1][1]
         count += 1
 
+    print()
+    print("States: ")
+    print(final_state_list)
 
     print("Start node:", robot_start_pos)
     print("End node:", target_node_pos)
+
+    return env, final_state_list
+
+def convertToSTM(final_state_list, turningRadius):
+    totalHWinstructions = []
+    for stateList in final_state_list:
+        totalHWinstructions.append(utilities.discreteInstructionToHardware(stateList, turningRadius))
+    print("HW instructions:")
+    print(totalHWinstructions)
+    return totalHWinstructions
+
+def timeMeasure(env, n):
+    total_time = 0
+    start_time = 0
+    end_time = 0
+    for i in range(n):
+        start_time = time.time()
+        runAStar(env)
+
+        end_time = time.time() - start_time
+        total_time += end_time
+        print("Iteration " + str(i+1) + " done")
+
+    return total_time/n
+
+if __name__ == "__main__":
+
+    # Initialize environment
+    env = Env(num_blocks=5, display=True)
+    # initialise info about robot
+    # WHEEL_LENGTH is 20
+    fwheelbwheelDist = drawing.CAR_LENGTH
+    # steeringAngle in degrees
+    steeringAngle = math.radians(env.STEERING_ANGLE)
+    turningRadius = fwheelbwheelDist / math.tan(steeringAngle)
+
+    """
+    iterations = 1
+    aveTime = timeMeasure(env, iterations)
+    print("Average time taken for " + str(iterations) + " times: " + str(aveTime) + "s")
+    """
+
+    env, output = runAStar(env)
+    convertToSTM(output, turningRadius)
+
+
     # Run a* on it and nav in a update_step
     # a_star = Hybrid_AStar(robot_start_pos, target_node_pos, env.blocks)
     # output = a_star.run()
