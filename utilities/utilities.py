@@ -80,7 +80,7 @@ def discreteInstructionToHardware(instructionSet, turningRadius, interval = 1):
         #turning motion
         else:
             #update total angle
-            totalValue += instruction[0] * interval
+            totalValue += math.degrees(pixel_to_cm(instruction[0] * interval)/turningRadius)
         if i == (len(instructionSet) - 1): #current element is last element
             if currentSteeringAngle == 0:
                 action = 'W'
@@ -89,6 +89,7 @@ def discreteInstructionToHardware(instructionSet, turningRadius, interval = 1):
             else:
                 action = 'D'
             HWInstructions.append((action, totalValue))
+
     return HWInstructions
 
 if __name__ == "__main__":

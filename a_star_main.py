@@ -91,7 +91,35 @@ if __name__ == "__main__":
     """
 
     env, output = runAStar(env)
-    convertToSTM(output, turningRadius)
+    HWInstructions = convertToSTM(output, turningRadius)
+
+    allStr = []
+    STMStr = ''
+    for IndivIns in HWInstructions:
+        for HWIns in IndivIns:
+            action = HWIns[0]
+            value = HWIns[1]
+            # move backwards
+            if HWIns[1] < 0:
+                value *= -1
+                if action == 'W':
+                    action = 'S'
+                elif action == 'A':
+                    action = 'Z'
+                elif action == 'D':
+                    action = 'C'
+            STMStr += action + str(round(value)) + '|'
+            #HWIns = (action, value)
+        allStr.append(STMStr)
+        STMStr = ''
+
+    print("Final string: ")
+    for s in allStr:
+        print(s)
+
+    #print("Final list: ")
+    #print(HWInstructions)
+
 
 
     # Run a* on it and nav in a update_step

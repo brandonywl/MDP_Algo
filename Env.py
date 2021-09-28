@@ -86,7 +86,7 @@ class Env:
         curr_point = self.robot.get_point()
         # next_point = move(curr_point, delta_steer, delta_forward, CAR_LENGTH,
         #                   self.MAX_STEERING_ANGLE, self.COMMAND_FREQUENCY)
-        print(delta_forward)
+        #print(delta_forward)
         next_point = backaxel_move(curr_point, delta_forward, delta_steer, CAR_LENGTH)
         if self.COLLISION_DETECTION_ON:
             if collision_detection.has_collision(next_point, self.blocks):
