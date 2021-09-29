@@ -12,7 +12,7 @@ def cm_to_pixel(cm, map_shape=800, physical_shape=200):
     return round((map_shape / physical_shape) * cm)
 
 def pixel_to_cm(pixel, map_shape=800, physical_shape=200):
-    return round((physical_shape / map_shape) * pixel)
+    return (physical_shape / map_shape) * pixel
 
 # checks if value is between lower and upper (inclusive of)
 def isBetween(value, lower, upper):
@@ -80,7 +80,7 @@ def discreteInstructionToHardware(instructionSet, turningRadius, interval = 1):
         #turning motion
         else:
             #update total angle
-            totalValue += math.degrees(pixel_to_cm(instruction[0] * interval)/turningRadius)
+            totalValue += math.degrees(pixel_to_cm(instruction[0] * interval)/pixel_to_cm(turningRadius))
         if i == (len(instructionSet) - 1): #current element is last element
             if currentSteeringAngle == 0:
                 action = 'W'

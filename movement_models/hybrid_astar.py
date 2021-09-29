@@ -25,8 +25,8 @@ class Hybrid_AStar:
         self.max_y = 840
         # self.max_y = 600
 
-        self.steering_angles = [-30, 0, 30]
-        # self.steering_angles = [-40, 0, 40]
+        # self.steering_angles = [-30, 0, 30]
+        self.steering_angles = [-40, 0, 40]
         # self.add_steering_costs = [0.1, 0, 0.1]
         self.add_steering_costs = [1, 0, 1]
 
@@ -50,11 +50,10 @@ class Hybrid_AStar:
     def angle_diff(self, position, target):
         return abs(position[2] - target[2])
 
-    # def round(self, x, prec=0, base=10):
+    def round(self, x, prec=0, base=10):
     # def round(self, x, prec=2, base=1):
     # def round(self, x, prec=2, base=15):
-
-    def round(self, x, prec = 1, base = 20):
+    # def round(self, x, prec = 1, base = 20):
         return round(base * round(float(x) / base), prec)
 
     def run(self):
@@ -109,7 +108,7 @@ class Hybrid_AStar:
 
             # if self.euc_dist(chosen_d_node, end) < 0.5:
             # if self.euc_dist(chosen_d_node, end) < 20:
-            if self.euc_dist(chosen_d_node, end) < 20 and self.angle_diff(chosen_d_node, end) < 30:
+            if self.euc_dist(chosen_d_node, end) < 20 and self.angle_diff(chosen_d_node, end) < 20:
                 print("We are done???")
                 print("count: ", count)
                 # print("visited_dict: ", visited_dict)

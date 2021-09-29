@@ -190,6 +190,28 @@ class Block(Cell):
         # print()
         return clashes
 
+    @staticmethod
+    def create_blocks(blocks_pos, block_shape):
+        blocks = []
+        for block_pos in blocks_pos:
+            x, y, theta = block_pos
+            orientation_id = Block.map_theta_to_orientation(theta)
+            block = Block(theta, x, y, orientation_id, block_shape[0], block_shape[1])
+            Block.offset_block(block)
+            blocks.append(block)
+        return blocks
+
+    @staticmethod
+    def map_theta_to_orientation(theta):
+        map_theta_to_orientation = {
+            90: 0,
+            270: 1,
+            180: 2,
+            0: 3
+        }
+
+        return map_theta_to_orientation[theta]
+
 
 if __name__ == "__main__":
     # print(Block.is_invalid_block_location(0, 17))

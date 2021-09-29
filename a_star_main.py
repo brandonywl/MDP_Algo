@@ -7,6 +7,8 @@ from map_tiles.block import Block
 from movement_models.hybrid_astar import Hybrid_AStar
 from utilities import drawing
 from utilities import utilities
+from utilities.drawing import CUBE_WIDTH, CUBE_LENGTH
+
 
 def runAStar(env):
     # Get robot start pos, target_node start pos
@@ -60,39 +62,64 @@ def convertToSTM(final_state_list, turningRadius):
     return totalHWinstructions
 
 def timeMeasure(env, n):
+    noSoln = 0
     total_time = 0
     start_time = 0
     end_time = 0
     for i in range(n):
         start_time = time.time()
-        runAStar(env)
+        output = runAStar(env)
+
+        if not output:
+            noSoln += 1
+            print("No solution found for this iteration")
 
         end_time = time.time() - start_time
         total_time += end_time
         print("Iteration " + str(i+1) + " done")
 
-    return total_time/n
+    return total_time/n, noSoln
 
 if __name__ == "__main__":
 
+    block_1 = (0, 10, 0)
+    block_2 = (6, 15, 0)
+    block_3 = (10, 8, 180)
+    block_4 = (6, 5, 270)
+    blocks_pos = (block_1, block_2, block_3, block_4)
+
+    blocks = Block.create_blocks(blocks_pos, (CUBE_WIDTH, CUBE_LENGTH))
+    block_pos = [x.get_pos()[1:] for x in blocks]
+    block_target_pos = [tuple(Block.get_target_point(block).as_list(False)) for block in blocks]
+
     # Initialize environment
     env = Env(num_blocks=5, display=True)
+
+
+    env.blocks = blocks
+    env.update()
+
+
     # initialise info about robot
     # WHEEL_LENGTH is 20
+    # CAR_LENGTH is 60
     fwheelbwheelDist = drawing.CAR_LENGTH
-    # steeringAngle in degrees
+    # steeringAngle in degrees, is 30 degrees
     steeringAngle = math.radians(env.STEERING_ANGLE)
+    #turningRadius is about 103.923 pixels, converted to cm is about 25.98cm
     turningRadius = fwheelbwheelDist / math.tan(steeringAngle)
 
     """
-    iterations = 1
-    aveTime = timeMeasure(env, iterations)
+    iterations = 50
+    aveTime, noSoln = timeMeasure(env, iterations)
     print("Average time taken for " + str(iterations) + " times: " + str(aveTime) + "s")
+    print("Total no solutions :" + str(noSoln))
     """
 
     env, output = runAStar(env)
     HWInstructions = convertToSTM(output, turningRadius)
-
+    
+    
     allStr = []
     STMStr = ''
     for IndivIns in HWInstructions:
@@ -116,6 +143,7 @@ if __name__ == "__main__":
     print("Final string: ")
     for s in allStr:
         print(s)
+    
 
     #print("Final list: ")
     #print(HWInstructions)
