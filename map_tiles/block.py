@@ -73,6 +73,11 @@ class Block(Cell):
         if new_theta > np.radians(360):
             new_theta -= np.radians(360)
 
+        new_theta += np.radians(90)
+
+        if new_theta > np.radians(360):
+            new_theta -= np.radians(360)
+
         return Point(new_x, new_y, new_theta)
 
 

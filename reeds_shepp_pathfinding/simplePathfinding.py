@@ -24,6 +24,8 @@ class simplePathfinding:
 
         self.vehicle_length = drawing.CAR_LENGTH
 
+        self.finalPath = None
+
     def dist(self, source, target):
         diff_x = target[0] - source[0]
         diff_y = target[1] - source[1]
@@ -33,7 +35,6 @@ class simplePathfinding:
         """
         Each node is represented as [x, y, theta], where theta is in degrees
         """
-
         """
         Elements in open_heap have the following format:
         (totalCost, node)
@@ -74,6 +75,7 @@ class simplePathfinding:
                     finalPath.append(currentNode)
                     currentNode = visited_dict[currentNode][2]
                 finalPath.append(start)
+                self.finalPath = finalPath
                 return finalPath
             
             heapq.heappop(open_heap)
@@ -98,7 +100,8 @@ class simplePathfinding:
                     heapq.heappush(totalCost, neighbourNode)
                     open_dict[neighbourNode] = [totalCost, traversedCost, currentNode]
 
-             
+    def findPathMidPoint(self):
+        return self.finalPath[round((len(self.finalPath)-1)/2)]
             
 
 

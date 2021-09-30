@@ -1,9 +1,8 @@
 import math
-from utilities import utilities
+import utilities.utilities as utilities
+import utilities.drawing as drawing
 
 from movement_models import collision_detection
-from reeds_shepp_pathfinding import reeds_shepp
-from utilities import drawing
 from map_tiles.point import Point
 
 #where range is (lower bounds, upper bounds)
@@ -21,15 +20,22 @@ def angleInRange(range, angle):
     else:
         return -1
 
+def collisionDetectionActionSet(start, actionSet, obstacles, turningRadius = 1):
+    for action in actionSet:
+        if collisionDetectionAction(start, action, obstacles, turningRadius):
+            return True
+        start = action.endPos
+    return False
+
 #detects collision between Action and Block
 #assumes start of action is (x, y, theta), theta in radians
-def collisionDetectionActions(start, action, obstacles, turningRadius = 1):
+def collisionDetectionAction(start, action, obstacles, turningRadius = 1):
     #assume that obstacles are square
     obstacleWidth = obstacles[0].cell_width
     obstaclesCoord = []
     #get list of center points of blocks
     for i in obstacles:
-        obstaclesCoord.append((i.x + i.obstacleWidth/2, i.y + i.obstacleWidth/2))
+        obstaclesCoord.append((i.x + obstacleWidth/2, i.y + obstacleWidth/2))
     
     #if distance between obstacle center and car position < maxNearestDist1, confirm collision
     maxNearestDist1 = drawing.CAR_LENGTH/4 + obstacleWidth/2
@@ -70,7 +76,7 @@ def collisionDetectionActions(start, action, obstacles, turningRadius = 1):
             arcAngleRange = (startArcAngle - action.value, startArcAngle)
         for obstacle in obstaclesCoord:
             obstacleDistToCenter = math.sqrt((obstacle[0] - arcCenterX)**2 + (obstacle[1] - arcCenterY)**2)
-            obstacleAngle = math.atan2((obstacle[1] - arcCenterY)/(obstacle[0] - arcCenterX))
+            obstacleAngle = math.atan2((obstacle[1] - arcCenterY),(obstacle[0] - arcCenterX))
             inRange = angleInRange(arcAngleRange, obstacleAngle)
             if inRange == 0:
                 obstacleDistToNearestPoint = math.abs(obstacleDistToCenter - turningRadius)
@@ -80,11 +86,11 @@ def collisionDetectionActions(start, action, obstacles, turningRadius = 1):
                     #check if car and obstacle are truly collided
                     carX = startX + (turningRadius/obstacleDistToCenter)*(obstacle[0] - arcCenterX)
                     carY = startY + (turningRadius/obstacleDistToCenter)*(obstacle[1] - arcCenterY)
-                    return collision_detection.has_collision(Point(carX, carY, obstacleAngle + (math.pi/2)*action.steering), [obstacle,])
+                    return collision_detection.has_collision(Point(carX, carY, obstacleAngle + (math.pi/2)*action.steering), obstacle)
             else:
                 carTheta = arcAngleRange[-inRange]
                 carX = turningRadius*math.cos(carTheta)
                 carY = turningRadius*math.sin(carTheta)
-                return collision_detection.has_collision(Point(carX, carY, carTheta + (math.pi/2)*action.steering), [obstacle,])          
+                return collision_detection.has_collision(Point(carX, carY, carTheta + (math.pi/2)*action.steering), obstacle)
     return False
 

@@ -3,14 +3,28 @@ import math
 import heapq
 import pygame
 
-from reeds_shepp_pathfinding.reeds_shepp import Reeds_Shepp
+from reeds_shepp_pathfinding.reeds_shepp import Reeds_Shepp, Action
+from reeds_shepp_pathfinding.simplePathfinding import simplePathfinding
 from reeds_shepp_pathfinding import reeds_shepp_collision_detection
 from utilities import drawing, utilities
 from Env import Env
 from map_tiles.block import Block
 
+block_1 = (0, 10, 0)
+block_2 = (6, 15, 0)
+block_3 = (10, 8, 180)
+block_4 = (6, 5, 270)
+blocks_pos = (block_1, block_2, block_3, block_4)
+
+blocks = Block.create_blocks(blocks_pos, (drawing.CUBE_WIDTH, drawing.CUBE_LENGTH))
+block_pos = [x.get_pos()[1:] for x in blocks]
+block_target_pos = [tuple(Block.get_target_point(block).as_list(False)) for block in blocks]
+
 # Initialize environment
 env = Env(num_blocks=5, display=True)
+env.blocks = blocks
+env.update()
+
 # initialise info about robot
 # WHEEL_LENGTH is 20
 fwheelbwheelDist = drawing.CAR_LENGTH
@@ -58,10 +72,6 @@ def reedsSheppTestTurningMotion(robot_start_pos):
         startPos = a.endPos
     print()
 
-def checkActionSetObstacleCollision(finalPath, obstacles):
-
-    return True
-
 #outputs order of goals to visit using reeds shepp
 #returns sortedFoundPaths, which has the format [(cost, [(target_node_pos), [actionSet]]),..]
 def findGoalOrderReedsShepps(robot_start_pos, goals):
@@ -107,6 +117,50 @@ def findGoalOrderReedsShepps(robot_start_pos, goals):
         foundPathsHeap.clear()
     return finalPath
 
+def findMidPoint(start, end, obstacles):
+    simplePath = simplePathfinding(start, end, obstacles)
+    simplePath.run()
+    return simplePath.findPathMidPoint()
+
+def checkActionSetObstacleCollision(path, startPos, obstacles):
+    newPath = []
+    for actionSet in path:
+        Action.setStartAndEndCoordActionSet(actionSet, startPos, turningRadius)
+        collision = reeds_shepp_collision_detection.collisionDetectionActionSet(startPos, actionSet, obstacles,
+                                                                                turningRadius)
+        endPos = actionSet[-1].endPos
+        if collision:
+            midPos = findMidPoint(startPos, endPos, obstacles)
+            reedsShepp1 = Reeds_Shepp(startPos, midPos, turningRadius)
+            reedsShepp2 = Reeds_Shepp(midPos, endPos, turningRadius)
+            actionSet1 = reedsShepp1.run()[1]
+            actionSet2 = reedsShepp2.run()[1]
+            path1 = checkActionSetObstacleCollision(actionSet1,startPos,obstacles)
+            path2 = checkActionSetObstacleCollision(actionSet2,midPos,obstacles)
+            for a in path1:
+                newPath.append(a)
+            for b in path2:
+                newPath.append(b)
+            return newPath
+        else:
+            newPath.append(actionSet)
+        startPos = endPos
+    return newPath
+
+def printAllPaths(allPaths):
+    obstacleCount = 1
+    actionSetCount = 1
+    for path in allPaths:
+        print("Obstacle " + str(obstacleCount) + ":")
+        for actionSet in path:
+            print("ActionSet " + str(actionSetCount) + ":")
+            for action in actionSet:
+                print("L/R/S: " + str(action.steering) + ", F/B: " + str(action.gear) + ", Value: " + str(action.value))
+            actionSetCount += 1
+        actionSetCount = 1
+        obstacleCount += 1
+    print()
+
 if __name__ == "__main__":
 
     # Get (robot_start_x, robot_start_y, robot_start_theta (degrees))
@@ -130,19 +184,43 @@ if __name__ == "__main__":
     print("All goals: ")
     print(goals)
 
-    # finalPath = [ ((target_node_pos), [actionSet], cost), ..]
-    finalPath = findGoalOrderReedsShepps(robot_start_pos, goals)
+    # prelimPath = [ ((target_node_pos), [actionSet], cost), ..]
+    prelimPath = findGoalOrderReedsShepps(robot_start_pos, goals)
 
+    #each path contains a list of actionSets, which are lists of actions themselves
+    path1 = []
+    path2 = []
+    path3 = []
+    path4 = []
+    path5 = []
+
+    path1.append(prelimPath[0][1])
+    path2.append(prelimPath[1][1])
+    path3.append(prelimPath[2][1])
+    path4.append(prelimPath[3][1])
+    #path5.append(prelimPath[4][1])
+
+    allPaths = [path1, path2, path3, path4, path5]
+    obstacles = env.blocks
     startPos = robot_start_pos
-    #update the start and end coordinates of every action
-    for path in finalPath:
-        for action in path[1]:
-            action.setStartAndEndCoord(startPos, turningRadius)
-            drawing.draw_path_action(env.window, action, turningRadius)
-            pygame.display.update()
-            startPos = action.endPos
+
+    print("Before collision checking: ")
+    printAllPaths(allPaths)
+
+    # update the start and end coordinates of every action
+    for path in allPaths:
+        actionSet = path[0]
+        endPos = actionSet[-1].endPos
+        path = checkActionSetObstacleCollision(path, startPos, obstacles)
+        startPos = endPos
+
+    print("After collision checking: ")
+    printAllPaths(allPaths)
 
 
+
+    # drawing.draw_path_action(env.window, action, turningRadius)
+    pygame.display.update()
 
     #pygame
 

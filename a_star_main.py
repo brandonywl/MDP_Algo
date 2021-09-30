@@ -53,10 +53,10 @@ def runAStar(env):
 
     return env, final_state_list
 
-def convertToSTM(final_state_list, turningRadius):
+def convertToSTM(final_state_list, vehicle_length):
     totalHWinstructions = []
     for stateList in final_state_list:
-        totalHWinstructions.append(utilities.discreteInstructionToHardware(stateList, turningRadius))
+        totalHWinstructions.append(utilities.discreteInstructionToHardware(stateList, vehicle_length))
     print("HW instructions:")
     print(totalHWinstructions)
     return totalHWinstructions
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     """
 
     env, output = runAStar(env)
-    HWInstructions = convertToSTM(output, turningRadius)
+    HWInstructions = convertToSTM(output, fwheelbwheelDist)
     
     
     allStr = []
@@ -143,7 +143,7 @@ if __name__ == "__main__":
     print("Final string: ")
     for s in allStr:
         print(s)
-    
+
 
     #print("Final list: ")
     #print(HWInstructions)

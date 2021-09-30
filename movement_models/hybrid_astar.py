@@ -18,9 +18,13 @@ class Hybrid_AStar:
         self.start = start
         self.end = end
 
+        #self.min_x = 0
+        #self.max_x = 800
+        #self.min_y = 0
+        #self.max_y = 800
         self.min_x = -40
         self.max_x = 840
-        # self.max_x = 600
+        #self.max_x = 600
         self.min_y = -40
         self.max_y = 840
         # self.max_y = 600
@@ -30,10 +34,13 @@ class Hybrid_AStar:
         # self.add_steering_costs = [0.1, 0, 0.1]
         self.add_steering_costs = [1, 0, 1]
 
-        # self.velocity = [-20, 20]
-        spd = self.round(utilities.cm_to_pixel(10), 0, 1)
-        self.velocity = [-spd, spd]
-        # self.velocity = [-40, 40]
+        #spd = math.radians(30)*utilities.cm_to_pixel(35)
+        #self.velocity = [-spd, spd]
+        #self.velocity = [utilities.cm_to_pixel(-19), utilities.cm_to_pixel(19)]
+        #self.velocity = [-20, 20]
+        # spd = self.round(utilities.cm_to_pixel(10), 0, 1)
+        # self.velocity = [-spd, spd]
+        self.velocity = [-40, 40]
         self.add_velocity_costs = [1, 0]
         # self.add_velocity_costs = [2, 0]
 

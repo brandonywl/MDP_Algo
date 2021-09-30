@@ -1,4 +1,5 @@
 import math
+import reeds_shepp_pathfinding.reeds_shepp as reeds_shepp
 
 def cm_to_pixel(cm, map_shape=800, physical_shape=200):
     """
@@ -52,11 +53,12 @@ def convertCoordFromPyCharm(pycharmCoord):
 
 #convert discrete instructions to hardware
 #instructionSet in the form [(velocity, steeringAngle),...], assuming steeringAngle is between 180 and -180
-def discreteInstructionToHardware(instructionSet, turningRadius, interval = 1):
+def discreteInstructionToHardware(instructionSet, vehicle_length, interval = 1):
     #W is straight
     #A is left
     #D is right
     #HWInstructions in the form [('W/A/D', angle/distance),...], angle in degree, distance in irl values
+    turningRadius = pixel_to_cm(float(vehicle_length)) / math.tan(math.radians(40))
     HWInstructions = []
     totalValue = 0
     currentSteeringAngle = instructionSet[0][1]
@@ -77,10 +79,15 @@ def discreteInstructionToHardware(instructionSet, turningRadius, interval = 1):
         if currentSteeringAngle == 0:
             #update total distance
             totalValue += pixel_to_cm(instruction[0] * interval)
+            #totalValue += 20
         #turning motion
         else:
             #update total angle
-            totalValue += math.degrees(pixel_to_cm(instruction[0] * interval)/pixel_to_cm(turningRadius))
+            #totalValue += math.degrees(pixel_to_cm(instruction[0] * interval)/pixel_to_cm(turningRadius))
+            #it wants to turn instruction[1] degrees and travel instruction[0] distance,
+            # but instruction[1] degrees = instruction[0]/turningRadius
+            totalValue += math.degrees(pixel_to_cm(instruction[0] * interval) / turningRadius)
+            # totalValue += abs(instruction[1] * interval)
         if i == (len(instructionSet) - 1): #current element is last element
             if currentSteeringAngle == 0:
                 action = 'W'
@@ -90,6 +97,36 @@ def discreteInstructionToHardware(instructionSet, turningRadius, interval = 1):
                 action = 'D'
             HWInstructions.append((action, totalValue))
 
+    return HWInstructions
+
+#convert discrete instructions to hardware
+#instructionSet in the form [(velocity, steeringAngle),...], assuming steeringAngle is between 180 and -180
+def discreteInstructionToHardware2(instructionSet, turningRadius, interval = 1):
+    #W is straight
+    #A is left
+    #D is right
+    #HWInstructions in the form [('W/A/D', angle/distance),...], angle in degree, distance in irl values
+    turningRadius = 35
+    HWInstructions = []
+    for i in range(len(instructionSet)):
+        instruction = instructionSet[i]
+        steeringAngle = instruction[1]
+        value = instruction[0]
+        if steeringAngle == 0:
+            HWInstructions.append(('W', value))
+        else:
+            source = (0,0,0)
+            target = (value*math.cos(0),value*math.sin(0),steeringAngle)
+            RS = reeds_shepp.Reeds_Shepp(target, source, turningRadius)
+            output = RS.run()
+            actionSet = output[1]
+            for action in actionSet:
+                if action.steering == 0:
+                    HWInstructions.append(('W', action.value*action.gear))
+                elif action.steering == 1:
+                    HWInstructions.append(('A', math.degrees(action.value * action.gear)))
+                elif action.steering == -1:
+                    HWInstructions.append(('D', math.degrees(action.value * action.gear)))
     return HWInstructions
 
 if __name__ == "__main__":

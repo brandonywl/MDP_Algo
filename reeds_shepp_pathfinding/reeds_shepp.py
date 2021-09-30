@@ -1,5 +1,5 @@
 import math
-from utilities import utilities
+import utilities.utilities as utilities
 
 #an action that can be taken in a Reeds-Shepp path
 #these include moving forward/backward in a straight line and turning left/right in forwards/backwards direction
@@ -48,6 +48,12 @@ class Action:
                 self.endPos = (self.startPos[0], self.startPos[1], math.radians(self.endPos[2]))
             self.isRadians = True
     """
+    @staticmethod
+    def setStartAndEndCoordActionSet(actionSet, startPos, turningRadius):
+        for action in actionSet:
+            action.setStartAndEndCoord(startPos, turningRadius)
+            startPos = action.endPos
+        return actionSet
 
     # start and end pos is in (x, y, theta), theta in radians
     # calculates start, end-coordinate, also arc center coordinates if applicable
