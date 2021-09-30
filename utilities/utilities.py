@@ -58,7 +58,6 @@ def discreteInstructionToHardware(instructionSet, vehicle_length, interval = 1):
     #A is left
     #D is right
     #HWInstructions in the form [('W/A/D', angle/distance),...], angle in degree, distance in irl values
-    turningRadius = pixel_to_cm(float(vehicle_length)) / math.tan(math.radians(40))
     HWInstructions = []
     totalValue = 0
     currentSteeringAngle = instructionSet[0][1]
@@ -86,7 +85,7 @@ def discreteInstructionToHardware(instructionSet, vehicle_length, interval = 1):
             #totalValue += math.degrees(pixel_to_cm(instruction[0] * interval)/pixel_to_cm(turningRadius))
             #it wants to turn instruction[1] degrees and travel instruction[0] distance,
             # but instruction[1] degrees = instruction[0]/turningRadius
-            totalValue += math.degrees(pixel_to_cm(instruction[0] * interval) / turningRadius)
+            totalValue += math.degrees((instruction[0] * interval * math.tan(math.radians(abs(instruction[1])))) / float(vehicle_length))
             # totalValue += abs(instruction[1] * interval)
         if i == (len(instructionSet) - 1): #current element is last element
             if currentSteeringAngle == 0:

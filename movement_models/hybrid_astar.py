@@ -30,7 +30,7 @@ class Hybrid_AStar:
         # self.max_y = 600
 
         # self.steering_angles = [-30, 0, 30]
-        self.steering_angles = [-40, 0, 40]
+        self.steering_angles = [-31, 0, 31]
         # self.add_steering_costs = [0.1, 0, 0.1]
         self.add_steering_costs = [1, 0, 1]
 
@@ -40,7 +40,7 @@ class Hybrid_AStar:
         #self.velocity = [-20, 20]
         # spd = self.round(utilities.cm_to_pixel(10), 0, 1)
         # self.velocity = [-spd, spd]
-        self.velocity = [-40, 40]
+        self.velocity = [-30, 30]
         self.add_velocity_costs = [1, 0]
         # self.add_velocity_costs = [2, 0]
 
@@ -125,9 +125,11 @@ class Hybrid_AStar:
                 reversed_final_path = [(chosen_d_node, chosen_c_node)]
                 reversed_states = [open_dict[chosen_d_node][3]]
                 temp = chosen_d_node
+                #print("continuous: ", chosen_c_node, "state it took: ", open_dict[chosen_d_node][3])
                 print("discrete: ", temp, "state it took: ", open_dict[chosen_d_node][3])
                 while True:
                     parent_discrete = visited_dict[temp][2][0]
+                    #print("continuous: ", visited_dict[parent_discrete][1], "state it took: ", open_dict[parent_discrete][3])
                     print("discrete: ", parent_discrete, "state it took: ", open_dict[parent_discrete][3])
                     # print(parent_discrete)
                     if parent_discrete == start:
