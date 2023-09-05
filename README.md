@@ -5,7 +5,7 @@ The car's wheels were controlled via a singular motor and could not provide diff
 
 The goal of the algorithms in this project is to find the fastest path to all 5 obstacles, while positioning our car in a optimal position to take a photo of the character. The following algorithms are tested:
 1. Reeds-Shepp Path Planning (referencing http://lavalle.pl/planning/node822.html)
-    - Failed to have consistent convergence or required a really long path. Probably due to improper tuning of the circles. 
+    - Failed to have consistent convergence or required a really long path. Unsure of how to improve on it.
 2. Deep Reinforcement Learning with Deep Q Networks
     - Bad convergence, training was inconsistent and often could not find a path.
 3. Hybrid A-star algorithm
